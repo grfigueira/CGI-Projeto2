@@ -3,6 +3,7 @@ import { ortho, lookAt, flatten } from "../../libs/MV.js";
 import {modelView, loadMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation } from "../../libs/stack.js";
 
 import * as SPHERE from '../../libs/objects/sphere.js';
+import * as CYLINDER from '../../libs/objects/cylinder.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -15,6 +16,10 @@ let animation = true;   // Animation is running
 //helice const
 const HELICE_DIAMETER = 4;
 
+const HELICE_CONECT_DIAMETER = 0.3;
+const HELICE_CONECT_HIGH = 0.5;
+
+const BODY_DIAMETER = 5;
 
 const PLANET_SCALE = 1;    // scale that will apply to each planet and satellite
 const ORBIT_SCALE = 1/60;   // scale that will apply to each orbit around the sun
@@ -64,6 +69,7 @@ function setup(shaders)
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     SPHERE.init(gl);
+    CYLINDER.init(gl);
     gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
     
     window.requestAnimationFrame(render);
@@ -98,6 +104,7 @@ function setup(shaders)
         SPHERE.draw(gl, program, mode);
     }
 
+
     function helicePart(){
         multScale([HELICE_DIAMETER,HELICE_DIAMETER/30,HELICE_DIAMETER/8]);
 
@@ -107,12 +114,59 @@ function setup(shaders)
         SPHERE.draw(gl, program, mode);
     }
 
+    function heliceConect(){
+        multScale([HELICE_CONECT_DIAMETER,HELICE_CONECT_HIGH,HELICE_CONECT_DIAMETER]);
+
+        uploadModelView();
+
+        CYLINDER.draw(gl, program,mode);
+    }
+
+    function rotHelice(){
+        pushMatrix();
+            multRotationY(30*time);
+            multTranslation([HELICE_DIAMETER/2,0,0]);
+            helicePart();
+        popMatrix();
+        pushMatrix();
+            multRotationY(30*time);
+            multScale([-1,1,1]);
+            multTranslation([HELICE_DIAMETER/2,0,0]);
+            helicePart();
+    popMatrix();
+    }
+
+    function helice(){
+        pushMatrix();
+            heliceConect();
+        popMatrix();
+        pushMatrix();
+            rotHelice();
+        popMatrix();
+    }
+
+    function body(){
+        multScale([BODY_DIAMETER/3,BODY_DIAMETER/2.5,BODY_DIAMETER]);
+
+        uploadModelView();
+
+        SPHERE.draw(gl, program,mode);
+    }
+
     function helicopter(){
-        helicePart();
+        pushMatrix();
+        body();
+        popMatrix();
+        pushMatrix();
+            multTranslation([0,BODY_DIAMETER/(2.5*2)+HELICE_CONECT_HIGH/2,0])
+            helice();
+        popMatrix();
     }
 
     function cityHel(){
-        helicopter();
+        pushMatrix()
+            helicopter();
+        popMatrix();
     }
 
     function render()
@@ -127,22 +181,11 @@ function setup(shaders)
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
     
         //loadMatrix(lookAt([0,VP_DISTANCE,VP_DISTANCE], [0,0,0], [0,1,0]));
-        loadMatrix(lookAt([0,VP_DISTANCE,0], [0,0,0], [0,0,1])); //olhar de cima para baixo
-        //loadMatrix(lookAt([VP_DISTANCE,0,0],[0,0,0],[0,1,0])); //olhar do x para o centro
+        //loadMatrix(lookAt([0,VP_DISTANCE,0], [0,0,0], [0,0,1])); //olhar de cima para baixo
+        loadMatrix(lookAt([VP_DISTANCE,0,0],[0,0,0],[0,1,0])); //olhar do x para o centro
         //loadMatrix(lookAt([0,0,VP_DISTANCE],[0,0,0],[0,1,0])); //olhar do z para o centro
 
-        pushMatrix();
-        multRotationY(30*time);
-        multTranslation([HELICE_DIAMETER/2,0,0]);
         cityHel();
-        popMatrix();
-        pushMatrix();
-        multRotationY(30*time);
-        multScale([-1,1,1]);
-        multTranslation([HELICE_DIAMETER/2,0,0]);
-        cityHel();
-        popMatrix();
-        //EarthMoon();
     }
 }
 
