@@ -18,6 +18,7 @@ const HELICE_DIAMETER = 4;
 
 const HELICE_CONECT_DIAMETER = 0.3;
 const HELICE_CONECT_HIGH = 0.5;
+const HELICE_SPEED = 50;
 
 const BODY_DIAMETER = 5;
 
@@ -124,13 +125,17 @@ function setup(shaders)
 
     function rotHelice(){
         pushMatrix();
-            multRotationY(30*time);
+            multRotationY(HELICE_SPEED*time);
             multTranslation([HELICE_DIAMETER/2,0,0]);
             helicePart();
         popMatrix();
         pushMatrix();
-            multRotationY(30*time);
-            multScale([-1,1,1]);
+            multRotationY(HELICE_SPEED*time+120);
+            multTranslation([HELICE_DIAMETER/2,0,0]);
+            helicePart();
+        popMatrix();
+        pushMatrix();
+            multRotationY(HELICE_SPEED*time+240);
             multTranslation([HELICE_DIAMETER/2,0,0]);
             helicePart();
     popMatrix();
@@ -181,8 +186,8 @@ function setup(shaders)
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
     
         //loadMatrix(lookAt([0,VP_DISTANCE,VP_DISTANCE], [0,0,0], [0,1,0]));
-        //loadMatrix(lookAt([0,VP_DISTANCE,0], [0,0,0], [0,0,1])); //olhar de cima para baixo
-        loadMatrix(lookAt([VP_DISTANCE,0,0],[0,0,0],[0,1,0])); //olhar do x para o centro
+        loadMatrix(lookAt([0,VP_DISTANCE,0], [0,0,0], [0,0,1])); //olhar de cima para baixo
+        //loadMatrix(lookAt([VP_DISTANCE,0,0],[0,0,0],[0,1,0])); //olhar do x para o centro
         //loadMatrix(lookAt([0,0,VP_DISTANCE],[0,0,0],[0,1,0])); //olhar do z para o centro
 
         cityHel();
