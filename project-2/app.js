@@ -12,33 +12,17 @@ let speed = 1/60.0;     // Speed (how many days added to time on each render pas
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 
-const PLANET_SCALE = 10;    // scale that will apply to each planet and satellite
+//helice const
+const HELICE_DIAMETER = 4;
+
+
+const PLANET_SCALE = 1;    // scale that will apply to each planet and satellite
 const ORBIT_SCALE = 1/60;   // scale that will apply to each orbit around the sun
 
 const SUN_DIAMETER = 1391900;
 const SUN_DAY = 24.47; // At the equator. The poles are slower as the sun is gaseous
 
-const MERCURY_DIAMETER = 4866*PLANET_SCALE;
-const MERCURY_ORBIT = 57950000*ORBIT_SCALE;
-const MERCURY_YEAR = 87.97;
-const MERCURY_DAY = 58.646;
-
-const VENUS_DIAMETER = 12106*PLANET_SCALE;
-const VENUS_ORBIT = 108110000*ORBIT_SCALE;
-const VENUS_YEAR = 224.70;
-const VENUS_DAY = 243.018;
-
-const EARTH_DIAMETER = 12742*PLANET_SCALE;
-const EARTH_ORBIT = 149570000*ORBIT_SCALE;
-const EARTH_YEAR = 365.26;
-const EARTH_DAY = 0.99726968;
-
-const MOON_DIAMETER = 3474*PLANET_SCALE;
-const MOON_ORBIT = 363396;
-const MOON_YEAR = 28;
-const MOON_DAY = 0;
-
-const VP_DISTANCE = EARTH_ORBIT;
+const VP_DISTANCE = 4;
 
 
 
@@ -114,65 +98,21 @@ function setup(shaders)
         SPHERE.draw(gl, program, mode);
     }
 
-    function Mercury(){
-        // Don't forget to scale the sun, rotate it around the y axis at the correct speed
-        multScale([MERCURY_DIAMETER, MERCURY_DIAMETER, MERCURY_DIAMETER]);
-        multRotationY(360*time/MERCURY_DAY);
+    function helicePart(){
+        multScale([HELICE_DIAMETER,HELICE_DIAMETER/30,HELICE_DIAMETER/8]);
 
-        // Send the current modelview matrix to the vertex shader
+
         uploadModelView();
 
-        // Draw a sphere representing the sun
         SPHERE.draw(gl, program, mode);
     }
 
-    function Earth(){
-        // Don't forget to scale the sun, rotate it around the y axis at the correct speed
-        multScale([EARTH_DIAMETER, EARTH_DIAMETER, EARTH_DIAMETER]);
-        multRotationY(360*time/EARTH_DAY);
-
-        // Send the current modelview matrix to the vertex shader
-        uploadModelView();
-
-        // Draw a sphere representing the sun
-        SPHERE.draw(gl, program, mode);
+    function helicopter(){
+        helicePart();
     }
 
-    function Moon(){
-        // Don't forget to scale the sun, rotate it around the y axis at the correct speed
-        multScale([MOON_DIAMETER, MOON_DIAMETER, MOON_DIAMETER]);
-
-        // Send the current modelview matrix to the vertex shader
-        uploadModelView();
-
-        // Draw a sphere representing the sun
-        SPHERE.draw(gl, program, mode);
-    }
-
-    function EarthMoon(){
-        pushMatrix();
-            Earth();
-        popMatrix();
-
-        multRotationY(360*time/MOON_YEAR);
-        multTranslation([MOON_ORBIT, 0, 0]);
-        Moon();
-    }
-
-    function SolarSystem(){
-        pushMatrix();
-            Sun();
-        popMatrix();
-
-        pushMatrix();
-            multRotationY(360*time/MERCURY_YEAR);
-            multTranslation([MERCURY_ORBIT, 0, 0]);
-            Mercury();
-        popMatrix();
-
-        multRotationY(360*time/EARTH_YEAR);
-        multTranslation([EARTH_ORBIT, 0, 0]);
-        EarthMoon();
+    function cityHel(){
+        helicopter();
     }
 
     function render()
@@ -186,9 +126,22 @@ function setup(shaders)
         
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
     
-        loadMatrix(lookAt([0,VP_DISTANCE,VP_DISTANCE], [0,0,0], [0,1,0]));
+        //loadMatrix(lookAt([0,VP_DISTANCE,VP_DISTANCE], [0,0,0], [0,1,0]));
+        loadMatrix(lookAt([0,VP_DISTANCE,0], [0,0,0], [0,0,1])); //olhar de cima para baixo
+        //loadMatrix(lookAt([VP_DISTANCE,0,0],[0,0,0],[0,1,0])); //olhar do x para o centro
+        //loadMatrix(lookAt([0,0,VP_DISTANCE],[0,0,0],[0,1,0])); //olhar do z para o centro
 
-        SolarSystem();
+        pushMatrix();
+        multRotationY(30*time);
+        multTranslation([HELICE_DIAMETER/2,0,0]);
+        cityHel();
+        popMatrix();
+        pushMatrix();
+        multRotationY(30*time);
+        multScale([-1,1,1]);
+        multTranslation([HELICE_DIAMETER/2,0,0]);
+        cityHel();
+        popMatrix();
         //EarthMoon();
     }
 }
