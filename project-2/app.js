@@ -8,6 +8,7 @@ import {
   loadMatrix,
   modelView,
   multRotationY,
+  multRotationX,
   multScale,
   multTranslation,
   popMatrix,
@@ -25,14 +26,37 @@ let speed = 1 / 60.0; // Speed (how many days added to time on each render pass
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 
-//helice const
+//Main Helice
 const HELICE_DIAMETER = 4;
+const HELICE_SCALE_X =1;
+const HELICE_SCALE_Y =1.0/30.0;
+const HELICE_SCALE_Z =1.0/8.0;
 
+//All helices
+const HELICE_SPEED = 50;
+const HELICE_NUM = 3;
+
+//Helice connector
 const HELICE_CONECT_DIAMETER = 0.3;
 const HELICE_CONECT_HIGH = 0.5;
-const HELICE_SPEED = 50;
 
+//Tail Main Connector
+const TAIL_MAIN_CONECT_DIAMETER = 4;
+const TAIL_MAIN_SCALE_X = 1.0/18.0;
+const TAIL_MAIN_SCALE_Y = 1.0/8.0;
+const TAIL_MAIN_SCALE_Z = 1.0;
+
+//Tail End Connector
+const TAIL_END_DIAMETER = 1;
+const TAIL_END_SCALE_X = 1.0;
+const TAIL_END_SCALE_Y = 1.0;
+const TAIL_END_SCALE_Z = 1.0;
+
+//Helicopter Body
 const BODY_DIAMETER = 5;
+const BODY_SCALE_X = 1.0/3.0
+const BODY_SCALE_Y = 1.0/2.2;
+const BODY_SCALE_Z = 1.0;
 
 const PLANET_SCALE = 1; // scale that will apply to each planet and satellite
 const ORBIT_SCALE = 1 / 60; // scale that will apply to each orbit around the sun
@@ -40,6 +64,8 @@ const ORBIT_SCALE = 1 / 60; // scale that will apply to each orbit around the su
 const SUN_DIAMETER = 1391900;
 const SUN_DAY = 24.47; // At the equator. The poles are slower as the sun is gaseous
 
+
+//View
 const VP_DISTANCE = 4;
 const XZview = lookAt([0, VP_DISTANCE, 0], [0, 0, 0], [0, 0, 1]); //olhar de cima para baixo
 const ZYview = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x para o centro
@@ -147,7 +173,7 @@ function setup(shaders) {
   }
 
   function helicePart() {
-    multScale([HELICE_DIAMETER, HELICE_DIAMETER / 30, HELICE_DIAMETER / 8]);
+    multScale([HELICE_DIAMETER*HELICE_SCALE_X, HELICE_DIAMETER*HELICE_SCALE_Y, HELICE_DIAMETER*HELICE_SCALE_Z]);
 
     uploadModelView();
 
@@ -167,34 +193,66 @@ function setup(shaders) {
   }
 
   function rotHelice() {
-    pushMatrix();
-    multRotationY(HELICE_SPEED * time);
-    multTranslation([HELICE_DIAMETER / 2, 0, 0]);
-    helicePart();
-    popMatrix();
-    pushMatrix();
-    multRotationY(HELICE_SPEED * time + 120);
-    multTranslation([HELICE_DIAMETER / 2, 0, 0]);
-    helicePart();
-    popMatrix();
-    pushMatrix();
-    multRotationY(HELICE_SPEED * time + 240);
-    multTranslation([HELICE_DIAMETER / 2, 0, 0]);
-    helicePart();
-    popMatrix();
+    for(let i = 0; i<360;i+=360/HELICE_NUM){
+        pushMatrix();
+            multRotationY(HELICE_SPEED * time+i);
+            multTranslation([HELICE_DIAMETER / 2, 0, 0]);
+            helicePart();
+        popMatrix();
+    }
   }
 
   function helice() {
     pushMatrix();
-    heliceConect();
+        heliceConect();
     popMatrix();
     pushMatrix();
-    rotHelice();
+        rotHelice();
     popMatrix();
   }
 
+  function tailConnector(){
+    multScale([TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_X, TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Y, TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z]);
+
+    uploadModelView();
+
+    SPHERE.draw(gl, program, mode);
+  }
+
+  function tailEnd(){
+    multScale([TAIL_END_DIAMETER*TAIL_END_SCALE_X, TAIL_END_DIAMETER*TAIL_END_SCALE_Y, TAIL_END_DIAMETER*TAIL_END_SCALE_Z]);
+
+    uploadModelView();
+
+    SPHERE.draw(gl, program, mode);
+
+  }
+
+  function tailTip(){
+    pushMatrix();
+        tailEnd();
+    popMatrix();
+    pushMatrix();
+        multTranslation([0,0,0]);
+        multRotationX([0,0,0]);
+        multScale([1,1,1]);
+        helice();
+    popMatrix();
+  }
+
+  function tail(){
+    pushMatrix();
+        tailConnector();
+    popMatrix();
+    pushMatrix();
+        multTranslation([0,TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Y /2.0,-TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z/2.0]);
+        tailTip();
+    popMatrix();
+  }
+
+
   function body() {
-    multScale([BODY_DIAMETER / 3, BODY_DIAMETER / 2.5, BODY_DIAMETER]);
+    multScale([BODY_DIAMETER * BODY_SCALE_X, BODY_DIAMETER * BODY_SCALE_Y, BODY_DIAMETER*BODY_SCALE_Z]);
 
     uploadModelView();
 
@@ -203,17 +261,21 @@ function setup(shaders) {
 
   function helicopter() {
     pushMatrix();
-    body();
+        body();
     popMatrix();
     pushMatrix();
-    multTranslation([0, BODY_DIAMETER / (2.5 * 2) + HELICE_CONECT_HIGH / 2, 0]);
-    helice();
+        multTranslation([0, BODY_DIAMETER*BODY_SCALE_Y/2.0 + HELICE_CONECT_HIGH/2.0,0.0]);
+        helice();
+    popMatrix();
+    pushMatrix();
+        multTranslation([0,BODY_DIAMETER*BODY_SCALE_Y/4.0,-(BODY_DIAMETER*BODY_SCALE_Z+TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z)/2.5]);
+        tail();
     popMatrix();
   }
 
   function cityHel() {
     pushMatrix();
-    helicopter();
+        helicopter();
     popMatrix();
   }
 
