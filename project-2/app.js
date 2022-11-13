@@ -28,6 +28,8 @@ let speed = 1 / 60.0; // Speed (how many days added to time on each render pass
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 
+
+//HELICOPTER CONST
 //Main Helice
 const HELICE_DIAMETER = 4;
 const HELICE_SIZE_X = HELICE_DIAMETER*1.0;
@@ -74,11 +76,14 @@ const FEET_Z = BODY_SIZE_Z;
 
 
 
+//VIEWCONST
 //View
-const VP_DISTANCE = 10.0;
-let directionView = [0.0,0.0,0.0];
-let eye = [VP_DISTANCE,0.0,0.0];
-let up = [0.0,1.0,0.0];
+//cos x da camara +dir
+//sen z da camara +dir
+const VP_DISTANCE = 6.0;
+let horizontalDirection = 0;
+let xCameraPos = 0;
+let zCameraPos = 0;
 let isPlayerView = false;
 
 
@@ -115,6 +120,10 @@ function setup(shaders) {
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
 
+  document.onmousemove = function(event){
+
+  }
+
   document.onkeydown = function (event) {
     switch (event.key) {
       case "w":
@@ -149,22 +158,22 @@ function setup(shaders) {
       break;
       
       case "j":
-        eye[0]++;
+        xCameraPos ++;
         break;
       case "k":
-        eye[2]--;
+        zCameraPos --;
         break;
       case "l":
-        eye[0]--;
+        xCameraPos --;
         break;
       case "i":
-        eye[2]++;
+        zCameraPos++;
         break;
       case "g":
-        directionView[0]--;
+        horizontalDirection -= Math.PI/10.0;
       break;
       case "h":
-        directionView[0]++;
+          horizontalDirection += Math.PI/10.0;
       break;
       
     }
@@ -185,6 +194,7 @@ function setup(shaders) {
     aspect = canvas.width / canvas.height;
 
     gl.viewport(0, 0, canvas.width, canvas.height);
+
     mProjection = ortho(
       -VP_DISTANCE * aspect,
       VP_DISTANCE * aspect,
@@ -202,7 +212,9 @@ function setup(shaders) {
       flatten(modelView()),
     );
   }
-
+  /*
+    Este método desenha uma das partes moviveis da helice
+  */
   function helicePart() {
     multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z]);
 
@@ -210,7 +222,9 @@ function setup(shaders) {
 
     SPHERE.draw(gl, program, mode);
   }
-
+  /*
+    Este método desenha o cilindro que conecta as partes moviveis da helice ao body.
+  */
   function heliceConect() {
     multScale([
       HELICE_CONECT_DIAMETER,
@@ -222,7 +236,9 @@ function setup(shaders) {
 
     CYLINDER.draw(gl, program, mode);
   }
-
+  /*
+    Este método desenha todas as partes de helice, calculando a sua velocidade
+*/
   function rotHelice() {
     for(let i = 0; i<360;i+=360/HELICE_NUM){
         pushMatrix();
@@ -232,7 +248,9 @@ function setup(shaders) {
         popMatrix();
     }
   }
-
+  /*
+    Este método cria uma helice inteira
+  */
   function helice() {
     pushMatrix();
         heliceConect();
@@ -242,6 +260,9 @@ function setup(shaders) {
     popMatrix();
   }
 
+  /*
+    Este método cria o obejto que conecta a cauda (zona da helice) do helicoptero e o body
+  */
   function tailConnector(){
     multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z]);
 
@@ -249,7 +270,9 @@ function setup(shaders) {
 
     SPHERE.draw(gl, program, mode);
   }
-
+/*
+    Este método cria a cauda do helicoptero/zona onde está situada a helice mais pequena
+*/
   function tailEnd(){
     multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z]);
 
@@ -258,7 +281,9 @@ function setup(shaders) {
     SPHERE.draw(gl, program, mode);
 
   }
-
+  /*
+    Este método desenha a ponta da cauda, ou seja, a helice pequena e o seu apoio
+*/
   function tailTip(){
     pushMatrix();
         multRotationX(-20)
@@ -272,6 +297,9 @@ function setup(shaders) {
     popMatrix();
   }
 
+  /*
+    Este método desenha a cauda completa
+*/
   function tail(){
     pushMatrix();
         tailConnector();
@@ -282,7 +310,9 @@ function setup(shaders) {
     popMatrix();
   }
 
-
+  /*
+    Este método desenha o body do helicoptero
+*/
   function body() {
     multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
 
@@ -290,6 +320,10 @@ function setup(shaders) {
 
     SPHERE.draw(gl, program, mode);
   }
+
+    /*
+    Este desenho desenha uma das quatro pernas laterais do helicoptero
+*/
 
   function legConect(){
     multRotationZ(LEG_ANGLE_Z);
@@ -302,6 +336,10 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
 
   }
+
+    /*
+    Este método desenha o pé, ou seja, a zona mais abaixo do helicoptero
+*/
   function feetEnd(){
 
     multScale([FEET_X,FEET_Y,FEET_Z]);
@@ -311,33 +349,44 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
+    /*
+    Este método desenha uma perna + pé (são duas pernas, basicamente, mas que seguram um unico pé)
+*/
   function oneLeg(){
     pushMatrix();
-      multTranslation([0,0,BODY_SIZE_Z/4]);
+      multTranslation([0.0,0.0,BODY_SIZE_Z/4]);
       legConect();
     popMatrix();
     pushMatrix();
-      multScale([1,1,-1]);
-      multTranslation([0,0,BODY_SIZE_Z/4]);
+      multScale([.01,1.0,-1.0]);
+      multTranslation([0.0,0.0,BODY_SIZE_Z/4]);
       legConect();
     popMatrix();
     pushMatrix();
-      multTranslation([Math.sin(LEG_ANGLE_Z*Math.PI/180)*LEG_CONECT_X+FEET_X/2,-(Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y),0]);
+      multTranslation([Math.sin(LEG_ANGLE_Z*Math.PI/180)*LEG_CONECT_X+FEET_X/2,-(Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y),0.0]);
       feetEnd();
     popMatrix();
   }
 
+    /*
+      Desenha toda a zona inferior do helicoptero, incluindo 4 pernas e dois pés
+*/
+
   function feet(){
     pushMatrix();
-      multTranslation([-BODY_SIZE_X/4,0,0])
+      multTranslation([-BODY_SIZE_X/4.0,0.0,0.0])
       oneLeg();
     popMatrix();
     pushMatrix();
-      multTranslation([BODY_SIZE_X/4,0,0])
+      multTranslation([BODY_SIZE_X/4.0,0.0,0.0])
       multScale([-1,1,1]);
       oneLeg();
     popMatrix();
   }
+
+    /*
+    Desenha o helicoptero inteiro
+*/
 
   function helicopter() {
     pushMatrix();
@@ -351,21 +400,41 @@ function setup(shaders) {
         multTranslation([0,BODY_SIZE_Y/4.0,-(BODY_SIZE_Z+TAIL_MAIN_SIZE_Z)/2.5]);
         tail();
     popMatrix();
-    popMatrix();
-    multTranslation([0,-(BODY_SIZE_Y/2+LEG_CONECT_Y/3),0]);
-        feet();
     pushMatrix();
+        multTranslation([0,-(BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2),0.0]);
+        feet();
+    popMatrix();
+  }
+  /*
+  Desenha o chão
+*/
+  function floor(){
+      
+    multScale([100.0,1.0,100.0]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
   }
 
-  function cityHel() {
+    /*
+    Desenha o mundo
+*/
+
+  function world(){
     pushMatrix();
-        helicopter();
+      //multTranslation([0.0,1.0,0.0]);
+      //floor();
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0,1.0,0.0]);
+      helicopter();
     popMatrix();
   }
 
   function render() {
-    console.log("EM eye: " +eye);
-    console.log("EM center: " + [eye[0]+directionView[0],eye[1]+directionView[1],eye[2]+directionView[2]]);
+    console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
+    console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     0;
@@ -378,12 +447,10 @@ function setup(shaders) {
       flatten(mProjection),
     );
      if(isPlayerView){
-      //view = lookAt([1,1,1],[0,0,0],[0,1,0]);
-      let center = [eye[0]+directionView[0],eye[1]+directionView[1],eye[2]+directionView[2]];
-      view = lookAt(eye ,center ,up); 
+      view = lookAt([xCameraPos,0.0,zCameraPos],[Math.sin(horizontalDirection)+xCameraPos,0,Math.cos(horizontalDirection)+zCameraPos],[0,1,0]);
     }
     loadMatrix(view);
-    cityHel();
+    world();
   }
 }
 

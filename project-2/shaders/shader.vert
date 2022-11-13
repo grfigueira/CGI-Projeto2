@@ -1,3 +1,4 @@
+precision highp float;
 uniform mat4 mModelView;
 uniform mat4 mProjection;
 
