@@ -80,11 +80,13 @@ const FEET_Z = BODY_SIZE_Z;
 //View
 //cos x da camara +dir
 //sen z da camara +dir
-const VP_DISTANCE = 6.0;
-let horizontalDirection = 0;
+const VP_DISTANCE = 5.0;
+
+let horizontalDirection = 0.0;
+let verticalDirection = 0.0;
 let xCameraPos = 0;
 let zCameraPos = 0;
-let isPlayerView = false;
+let isCenterView = false;
 
 
 //const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
@@ -142,39 +144,34 @@ function setup(shaders) {
         if (animation) speed /= 1.1;
         break;
       case "1":
-        isPlayerView = false;
+        isCenterView = false;
         view = XZview;
         break;
       case "2":
-        isPlayerView = false;
+        isCenterView = false;
         view = ZYview;
         break;
       case "3":
-        isPlayerView = false;
+        isCenterView = false;
         view = XYview;
         break;
       case "4":
-        isPlayerView = true;
+        isCenterView = true;
       break;
-      
       case "j":
-        xCameraPos ++;
-        break;
-      case "k":
-        zCameraPos --;
-        break;
-      case "l":
-        xCameraPos --;
-        break;
-      case "i":
-        zCameraPos++;
-        break;
-      case "g":
-        horizontalDirection -= Math.PI/10.0;
-      break;
-      case "h":
           horizontalDirection += Math.PI/10.0;
       break;
+      case "l":
+          horizontalDirection -= Math.PI/10.0;
+      break;
+      case "i":
+        if(verticalDirection<Math.PI/2.0){
+            verticalDirection +=Math.PI/10.0;}
+        break;
+      case "k":
+        if(verticalDirection>-Math.PI/2.0){
+          verticalDirection -=Math.PI/10.0;}
+        break;
       
     }
   };
@@ -446,8 +443,9 @@ function setup(shaders) {
       false,
       flatten(mProjection),
     );
-     if(isPlayerView){
-      view = lookAt([xCameraPos,0.0,zCameraPos],[Math.sin(horizontalDirection)+xCameraPos,0,Math.cos(horizontalDirection)+zCameraPos],[0,1,0]);
+     if(isCenterView){
+      //view = lookAt([xCameraPos,0.0,zCameraPos],[0,0,0],[0,1,0]);
+      view = lookAt([0,0,0],[Math.sin(horizontalDirection)+xCameraPos,Math.sin(verticalDirection),Math.cos(horizontalDirection)+zCameraPos],[0,1,0]);
     }
     loadMatrix(view);
     world();
