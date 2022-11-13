@@ -28,6 +28,17 @@ let speed = 1 / 60.0; // Speed (how many days added to time on each render pass
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 
+//VIEWCONST
+//View
+const VP_DISTANCE = 40.0;
+const CAMERA_ANGLE_CHANGE = Math.PI/20.0;
+
+let horizontalDirection = 0.0;
+let verticalDirection = 0.0;
+let xCameraPos = 0;
+let zCameraPos = 0;
+let isCenterView = false;
+
 //World Limits
 const WORLD_X_UPPER_LIMIT = 100.0;
 const WORLD_Y_UPPER_LIMIT = 100.0;
@@ -39,7 +50,9 @@ const WORLD_Z_LOWER_LIMIT = -100.0;
 
 
 //Helicopter movement
-const HELICOPTER_ANGLE_CHANGE = Math.PI/20.0;
+
+const HELICOPTER_ANGLE_CHANGE = 20;
+let helicopterAngle = 0.0;
 let helicopterPosX = 0.0;
 let helicopterPosY = 0.0;
 let helicopterPosZ = 0.0;
@@ -90,25 +103,13 @@ const FEET_Z = BODY_SIZE_Z;
 
 
 
-//VIEWCONST
-//View
-//cos x da camara +dir
-//sen z da camara +dir
-const VP_DISTANCE = 10.0;
-
-let horizontalDirection = 0.0;
-let verticalDirection = 0.0;
-let xCameraPos = 0;
-let zCameraPos = 0;
-let isCenterView = false;
-
-
 //const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
+const axonotricView = lookAt([VP_DISTANCE, VP_DISTANCE, VP_DISTANCE], [0, 0, 0], [0,1, 0]);
 const XZview = lookAt([0, VP_DISTANCE, 0], [0, 0, 0], [0, 0, 1]); //olhar de cima para baixo
 const ZYview = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x para o centro
 const XYview = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]); //olhar do z para o centro
 
-let view = XZview;
+let view = axonotricView;
 
 function setup(shaders) {
   let canvas = document.getElementById("gl-canvas");
@@ -159,53 +160,59 @@ function setup(shaders) {
         break;
       case "1":
         isCenterView = false;
-        view = XZview;
+        view = axonotricView;
         break;
       case "2":
         isCenterView = false;
-        view = ZYview;
+        view = XZview;
         break;
       case "3":
         isCenterView = false;
-        view = XYview;
+        view = ZYview;
         break;
       case "4":
+        isCenterView = false;
+        view = XYview;
+        break;
+      case "5":
         isCenterView = true;
       break;
       case "j":
-          horizontalDirection += HELICOPTER_ANGLE_CHANGE;
+          horizontalDirection += CAMERA_ANGLE_CHANGE;
       break;
       case "l":
-          horizontalDirection -= HELICOPTER_ANGLE_CHANGE;
+          horizontalDirection -= CAMERA_ANGLE_CHANGE;
       break;
       case "i":
         if(verticalDirection<Math.PI/2.0){
-            verticalDirection +=HELICOPTER_ANGLE_CHANGE;}
+            verticalDirection +=CAMERA_ANGLE_CHANGE;}
         break;
       case "k":
         if(verticalDirection>-Math.PI/2.0){
-          verticalDirection -=HELICOPTER_ANGLE_CHANGE;}
+          verticalDirection -=CAMERA_ANGLE_CHANGE;}
         break;
       case "r":
-          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT){
-            helicopterPosZ++;
+          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT && helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
+            helicopterPosZ+=Math.cos(helicopterAngle*Math.PI/180);
+          }
+          if(helicopterPosX!=WORLD_X_UPPER_LIMIT && helicopterPosX!=WORLD_X_LOWER_LIMIT){
+            helicopterPosX+=Math.sin(helicopterAngle*Math.PI/180);
           }
       break;
       case "f":
-        if(helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
-          helicopterPosZ--;
-        }
+          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT && helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
+            helicopterPosZ-=Math.cos(helicopterAngle*Math.PI/180);
+          }
+          if(helicopterPosX!=WORLD_X_UPPER_LIMIT && helicopterPosX!=WORLD_X_LOWER_LIMIT){
+            helicopterPosX-=Math.sin(helicopterAngle*Math.PI/180);
+          }
       break;
       case "g":
-        if(helicopterPosX!=WORLD_X_UPPER_LIMIT){
-          helicopterPosX--;
-        }
+          helicopterAngle+=HELICOPTER_ANGLE_CHANGE;
       break;
 
       case "d":
-        if(helicopterPosX!=WORLD_X_LOWER_LIMIT){
-          helicopterPosX++;
-        }
+          helicopterAngle-=HELICOPTER_ANGLE_CHANGE;
       break;
 
       case "y":
@@ -472,6 +479,7 @@ function setup(shaders) {
     pushMatrix();
       let helicopterHigh = BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2;
       multTranslation([helicopterPosX,helicopterPosY+helicopterHigh,helicopterPosZ]);
+      multRotationY(helicopterAngle);
       helicopter();
     popMatrix();
   }
