@@ -28,8 +28,22 @@ let speed = 1 / 60.0; // Speed (how many days added to time on each render pass
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 
+//World Limits
+const WORLD_X_UPPER_LIMIT = 100.0;
+const WORLD_Y_UPPER_LIMIT = 100.0;
+const WORLD_Z_UPPER_LIMIT = 100.0;
 
-//HELICOPTER CONST
+const WORLD_X_LOWER_LIMIT = -100.0;
+const WORLD_Y_LOWER_LIMIT = 0.0;
+const WORLD_Z_LOWER_LIMIT = -100.0;
+
+
+//Helicopter movement
+const HELICOPTER_ANGLE_CHANGE = Math.PI/20.0;
+let helicopterPosX = 0.0;
+let helicopterPosY = 0.0;
+let helicopterPosZ = 0.0;
+
 //Main Helice
 const HELICE_DIAMETER = 4;
 const HELICE_SIZE_X = HELICE_DIAMETER*1.0;
@@ -37,7 +51,7 @@ const HELICE_SIZE_Y = HELICE_DIAMETER*1.0/30.0;
 const HELICE_SIZE_Z = HELICE_DIAMETER*1.0/8.0;
 
 //All helices
-const HELICE_SPEED = 50;
+const HELICE_SPEED = 1000;
 const HELICE_NUM = 3;
 
 //Helice connector
@@ -80,7 +94,7 @@ const FEET_Z = BODY_SIZE_Z;
 //View
 //cos x da camara +dir
 //sen z da camara +dir
-const VP_DISTANCE = 5.0;
+const VP_DISTANCE = 10.0;
 
 let horizontalDirection = 0.0;
 let verticalDirection = 0.0;
@@ -159,19 +173,51 @@ function setup(shaders) {
         isCenterView = true;
       break;
       case "j":
-          horizontalDirection += Math.PI/10.0;
+          horizontalDirection += HELICOPTER_ANGLE_CHANGE;
       break;
       case "l":
-          horizontalDirection -= Math.PI/10.0;
+          horizontalDirection -= HELICOPTER_ANGLE_CHANGE;
       break;
       case "i":
         if(verticalDirection<Math.PI/2.0){
-            verticalDirection +=Math.PI/10.0;}
+            verticalDirection +=HELICOPTER_ANGLE_CHANGE;}
         break;
       case "k":
         if(verticalDirection>-Math.PI/2.0){
-          verticalDirection -=Math.PI/10.0;}
+          verticalDirection -=HELICOPTER_ANGLE_CHANGE;}
         break;
+      case "r":
+          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT){
+            helicopterPosZ++;
+          }
+      break;
+      case "f":
+        if(helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
+          helicopterPosZ--;
+        }
+      break;
+      case "g":
+        if(helicopterPosX!=WORLD_X_UPPER_LIMIT){
+          helicopterPosX--;
+        }
+      break;
+
+      case "d":
+        if(helicopterPosX!=WORLD_X_LOWER_LIMIT){
+          helicopterPosX++;
+        }
+      break;
+
+      case "y":
+         if(helicopterPosY!=WORLD_Y_UPPER_LIMIT){
+          helicopterPosY++;
+         } 
+      break;
+      case "h":
+        if(helicopterPosY!=WORLD_Y_LOWER_LIMIT){
+         helicopterPosY--;
+        } 
+     break;
       
     }
   };
@@ -410,8 +456,8 @@ function setup(shaders) {
     multScale([100.0,1.0,100.0]);
 
     uploadModelView();
-
-    CUBE.draw(gl, program, mode);
+    SPHERE.draw(gl,program,mode);
+    //CUBE.draw(gl, program, mode);
   }
 
     /*
@@ -420,11 +466,12 @@ function setup(shaders) {
 
   function world(){
     pushMatrix();
-      //multTranslation([0.0,1.0,0.0]);
-      //floor();
+      multTranslation([0.0,-1.0,0.0]);
+      floor();
     popMatrix();
     pushMatrix();
-      multTranslation([0.0,1.0,0.0]);
+      let helicopterHigh = BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2;
+      multTranslation([helicopterPosX,helicopterPosY+helicopterHigh,helicopterPosZ]);
       helicopter();
     popMatrix();
   }
@@ -432,6 +479,9 @@ function setup(shaders) {
   function render() {
     console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
     console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
+    console.log("helX = " + helicopterPosX);
+    console.log("helZ = " + helicopterPosY);
+    console.log("helZ = "+ helicopterPosZ);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     0;
