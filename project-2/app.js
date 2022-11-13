@@ -30,7 +30,7 @@ let animation = true; // Animation is running
 
 //VIEWCONST
 //View
-const VP_DISTANCE = 40.0;
+const VP_DISTANCE = 10.0;
 const CAMERA_ANGLE_CHANGE = Math.PI/20.0;
 
 let horizontalDirection = 0.0;
@@ -192,18 +192,18 @@ function setup(shaders) {
           verticalDirection -=CAMERA_ANGLE_CHANGE;}
         break;
       case "r":
-          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT && helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
+          if(isWithinWorldLimit(helicopterPosX,helicopterPosY,helicopterPosZ+Math.cos(helicopterAngle*Math.PI/180))){
             helicopterPosZ+=Math.cos(helicopterAngle*Math.PI/180);
           }
-          if(helicopterPosX!=WORLD_X_UPPER_LIMIT && helicopterPosX!=WORLD_X_LOWER_LIMIT){
+          if(isWithinWorldLimit(helicopterPosX+Math.sin(helicopterAngle*Math.PI/180),helicopterPosY,helicopterPosZ)){
             helicopterPosX+=Math.sin(helicopterAngle*Math.PI/180);
           }
       break;
       case "f":
-          if(helicopterPosZ!=WORLD_Z_UPPER_LIMIT && helicopterPosZ!=WORLD_Z_LOWER_LIMIT){
+          if(isWithinWorldLimit(helicopterPosX,helicopterPosY,helicopterPosZ-Math.cos(helicopterAngle*Math.PI/180))){
             helicopterPosZ-=Math.cos(helicopterAngle*Math.PI/180);
           }
-          if(helicopterPosX!=WORLD_X_UPPER_LIMIT && helicopterPosX!=WORLD_X_LOWER_LIMIT){
+          if(isWithinWorldLimit(helicopterPosX-Math.sin(helicopterAngle*Math.PI/180),helicopterPosY,helicopterPosZ)){
             helicopterPosX-=Math.sin(helicopterAngle*Math.PI/180);
           }
       break;
@@ -216,16 +216,19 @@ function setup(shaders) {
       break;
 
       case "y":
-         if(helicopterPosY!=WORLD_Y_UPPER_LIMIT){
-          helicopterPosY++;
+         if(isWithinWorldLimit(helicopterPosX,helicopterPosY+1,helicopterPosZ)){
+          helicopterPosY++;}
+          else{
+            helicopterPosY = WORLD_Y_UPPER_LIMIT;
          } 
       break;
       case "h":
-        if(helicopterPosY!=WORLD_Y_LOWER_LIMIT){
-         helicopterPosY--;
-        } 
+        if(isWithinWorldLimit(helicopterPosX,helicopterPosY-1,helicopterPosZ)){
+         helicopterPosY--;}
+         else{
+          helicopterPosY = WORLD_Y_LOWER_LIMIT;
+         }
      break;
-      
     }
   };
 
@@ -262,6 +265,14 @@ function setup(shaders) {
       flatten(modelView()),
     );
   }
+
+  function isWithinWorldLimit(x,y,z){
+      let isWithinX= x<=WORLD_X_UPPER_LIMIT && x>=WORLD_X_LOWER_LIMIT;
+      let isWithinY= y<=WORLD_Y_UPPER_LIMIT && y>=WORLD_Y_LOWER_LIMIT;
+      let isWithinZ= z<=WORLD_Z_UPPER_LIMIT && z>=WORLD_Z_LOWER_LIMIT;
+      return isWithinX && isWithinY && isWithinZ;
+  }
+
   /*
     Este método desenha uma das partes moviveis da helice
   */
@@ -478,6 +489,8 @@ function setup(shaders) {
     popMatrix();
     pushMatrix();
       let helicopterHigh = BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2;
+      if(isWithinWorldLimit(helicopterPosX,helicopterPosY,helicopterPosZ) && helicopterPosY != 0.0){
+        helicopterPosY += Math.sin(time*Math.PI)/100.0;}
       multTranslation([helicopterPosX,helicopterPosY+helicopterHigh,helicopterPosZ]);
       multRotationY(helicopterAngle);
       helicopter();
