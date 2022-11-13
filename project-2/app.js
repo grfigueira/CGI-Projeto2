@@ -8,6 +8,7 @@ import {
   loadMatrix,
   modelView,
   multRotationY,
+  multRotationZ,
   multRotationX,
   multScale,
   multTranslation,
@@ -17,6 +18,7 @@ import {
 
 import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
+import * as CUBE from "../../libs/objects/cube.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -28,9 +30,9 @@ let animation = true; // Animation is running
 
 //Main Helice
 const HELICE_DIAMETER = 4;
-const HELICE_SCALE_X =1;
-const HELICE_SCALE_Y =1.0/30.0;
-const HELICE_SCALE_Z =1.0/8.0;
+const HELICE_SIZE_X = HELICE_DIAMETER*1.0;
+const HELICE_SIZE_Y = HELICE_DIAMETER*1.0/30.0;
+const HELICE_SIZE_Z = HELICE_DIAMETER*1.0/8.0;
 
 //All helices
 const HELICE_SPEED = 50;
@@ -41,32 +43,46 @@ const HELICE_CONECT_DIAMETER = 0.3;
 const HELICE_CONECT_HIGH = 0.5;
 
 //Tail Main Connector
-const TAIL_MAIN_CONECT_DIAMETER = 4;
-const TAIL_MAIN_SCALE_X = 1.0/18.0;
-const TAIL_MAIN_SCALE_Y = 1.0/8.0;
-const TAIL_MAIN_SCALE_Z = 1.0;
+const TAIL_MAIN_CONECT_DIAMETER = 4.0;
+const TAIL_MAIN_SIZE_X = TAIL_MAIN_CONECT_DIAMETER*1.0/18.0;
+const TAIL_MAIN_SIZE_Y = TAIL_MAIN_CONECT_DIAMETER*1.0/8.0;
+const TAIL_MAIN_SIZE_Z = TAIL_MAIN_CONECT_DIAMETER*1.0;
 
 //Tail End Connector
 const TAIL_END_DIAMETER = 1;
-const TAIL_END_SCALE_X = 1.0;
-const TAIL_END_SCALE_Y = 1.0;
-const TAIL_END_SCALE_Z = 1.0;
+const TAIL_END_SIZE_X =TAIL_END_DIAMETER*1.0/13.0;
+const TAIL_END_SIZE_Y =TAIL_END_DIAMETER*1.0;
+const TAIL_END_SIZE_Z =TAIL_END_DIAMETER*1.0/1.8 ;
+
+//Leg connector
+const LEG_ANGLE_Y = 30;
+const LEG_ANGLE_Z = 60;
+const LEG_CONECT_X=1.2;
+const LEG_CONECT_Y=1/7;
+const LEG_CONECT_Z=1/4;
 
 //Helicopter Body
-const BODY_DIAMETER = 5;
-const BODY_SCALE_X = 1.0/3.0
-const BODY_SCALE_Y = 1.0/2.2;
-const BODY_SCALE_Z = 1.0;
+const BODY_DIAMETER = 5.0;
+const BODY_SIZE_X =BODY_DIAMETER*1.0/3.0;
+const BODY_SIZE_Y =BODY_DIAMETER*1.0/2.2;
+const BODY_SIZE_Z =BODY_DIAMETER*1.0;
 
-const PLANET_SCALE = 1; // scale that will apply to each planet and satellite
-const ORBIT_SCALE = 1 / 60; // scale that will apply to each orbit around the sun
+//Feet
+const FEET_X =  1/4;
+const FEET_Y = 1/4;
+const FEET_Z = BODY_SIZE_Z;
 
-const SUN_DIAMETER = 1391900;
-const SUN_DAY = 24.47; // At the equator. The poles are slower as the sun is gaseous
 
 
 //View
-const VP_DISTANCE = 4;
+const VP_DISTANCE = 10.0;
+let directionView = [0.0,0.0,0.0];
+let eye = [VP_DISTANCE,0.0,0.0];
+let up = [0.0,1.0,0.0];
+let isPlayerView = false;
+
+
+//const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
 const XZview = lookAt([0, VP_DISTANCE, 0], [0, 0, 0], [0, 0, 1]); //olhar de cima para baixo
 const ZYview = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x para o centro
 const XYview = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]); //olhar do z para o centro
@@ -117,20 +133,47 @@ function setup(shaders) {
         if (animation) speed /= 1.1;
         break;
       case "1":
+        isPlayerView = false;
         view = XZview;
         break;
       case "2":
+        isPlayerView = false;
         view = ZYview;
         break;
       case "3":
+        isPlayerView = false;
         view = XYview;
         break;
+      case "4":
+        isPlayerView = true;
+      break;
+      
+      case "j":
+        eye[0]++;
+        break;
+      case "k":
+        eye[2]--;
+        break;
+      case "l":
+        eye[0]--;
+        break;
+      case "i":
+        eye[2]++;
+        break;
+      case "g":
+        directionView[0]--;
+      break;
+      case "h":
+        directionView[0]++;
+      break;
+      
     }
   };
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   SPHERE.init(gl);
   CYLINDER.init(gl);
+  CUBE.init(gl);
   gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
 
   window.requestAnimationFrame(render);
@@ -160,20 +203,8 @@ function setup(shaders) {
     );
   }
 
-  function Sun() {
-    // Don't forget to scale the sun, rotate it around the y axis at the correct speed
-    multScale([SUN_DIAMETER, SUN_DIAMETER, SUN_DIAMETER]);
-    multRotationY(360 * time / SUN_DAY);
-
-    // Send the current modelview matrix to the vertex shader
-    uploadModelView();
-
-    // Draw a sphere representing the sun
-    SPHERE.draw(gl, program, mode);
-  }
-
   function helicePart() {
-    multScale([HELICE_DIAMETER*HELICE_SCALE_X, HELICE_DIAMETER*HELICE_SCALE_Y, HELICE_DIAMETER*HELICE_SCALE_Z]);
+    multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z]);
 
     uploadModelView();
 
@@ -212,7 +243,7 @@ function setup(shaders) {
   }
 
   function tailConnector(){
-    multScale([TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_X, TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Y, TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z]);
+    multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z]);
 
     uploadModelView();
 
@@ -220,7 +251,7 @@ function setup(shaders) {
   }
 
   function tailEnd(){
-    multScale([TAIL_END_DIAMETER*TAIL_END_SCALE_X, TAIL_END_DIAMETER*TAIL_END_SCALE_Y, TAIL_END_DIAMETER*TAIL_END_SCALE_Z]);
+    multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z]);
 
     uploadModelView();
 
@@ -230,12 +261,13 @@ function setup(shaders) {
 
   function tailTip(){
     pushMatrix();
+        multRotationX(-20)
         tailEnd();
     popMatrix();
     pushMatrix();
-        multTranslation([0,0,0]);
-        multRotationX([0,0,0]);
-        multScale([1,1,1]);
+        multTranslation([(TAIL_END_SIZE_X+HELICE_CONECT_DIAMETER)/2,0,0]);
+        multRotationZ(90);
+        multScale([0.3,0.3,0.3]);
         helice();
     popMatrix();
   }
@@ -245,18 +277,66 @@ function setup(shaders) {
         tailConnector();
     popMatrix();
     pushMatrix();
-        multTranslation([0,TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Y /2.0,-TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z/2.0]);
+        multTranslation([0,TAIL_MAIN_SIZE_Y /2.0,-TAIL_MAIN_SIZE_Z/2.0]);
         tailTip();
     popMatrix();
   }
 
 
   function body() {
-    multScale([BODY_DIAMETER * BODY_SCALE_X, BODY_DIAMETER * BODY_SCALE_Y, BODY_DIAMETER*BODY_SCALE_Z]);
+    multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
 
     uploadModelView();
 
     SPHERE.draw(gl, program, mode);
+  }
+
+  function legConect(){
+    multRotationZ(LEG_ANGLE_Z);
+    multRotationY(LEG_ANGLE_Y);
+
+    multScale([LEG_CONECT_X,LEG_CONECT_Y,LEG_CONECT_Z]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+
+  }
+  function feetEnd(){
+
+    multScale([FEET_X,FEET_Y,FEET_Z]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function oneLeg(){
+    pushMatrix();
+      multTranslation([0,0,BODY_SIZE_Z/4]);
+      legConect();
+    popMatrix();
+    pushMatrix();
+      multScale([1,1,-1]);
+      multTranslation([0,0,BODY_SIZE_Z/4]);
+      legConect();
+    popMatrix();
+    pushMatrix();
+      multTranslation([Math.sin(LEG_ANGLE_Z*Math.PI/180)*LEG_CONECT_X+FEET_X/2,-(Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y),0]);
+      feetEnd();
+    popMatrix();
+  }
+
+  function feet(){
+    pushMatrix();
+      multTranslation([-BODY_SIZE_X/4,0,0])
+      oneLeg();
+    popMatrix();
+    pushMatrix();
+      multTranslation([BODY_SIZE_X/4,0,0])
+      multScale([-1,1,1]);
+      oneLeg();
+    popMatrix();
   }
 
   function helicopter() {
@@ -264,13 +344,17 @@ function setup(shaders) {
         body();
     popMatrix();
     pushMatrix();
-        multTranslation([0, BODY_DIAMETER*BODY_SCALE_Y/2.0 + HELICE_CONECT_HIGH/2.0,0.0]);
+        multTranslation([0, BODY_SIZE_Y/2.0 + HELICE_CONECT_HIGH/2.0,0.0]);
         helice();
     popMatrix();
     pushMatrix();
-        multTranslation([0,BODY_DIAMETER*BODY_SCALE_Y/4.0,-(BODY_DIAMETER*BODY_SCALE_Z+TAIL_MAIN_CONECT_DIAMETER*TAIL_MAIN_SCALE_Z)/2.5]);
+        multTranslation([0,BODY_SIZE_Y/4.0,-(BODY_SIZE_Z+TAIL_MAIN_SIZE_Z)/2.5]);
         tail();
     popMatrix();
+    popMatrix();
+    multTranslation([0,-(BODY_SIZE_Y/2+LEG_CONECT_Y/3),0]);
+        feet();
+    pushMatrix();
   }
 
   function cityHel() {
@@ -280,6 +364,8 @@ function setup(shaders) {
   }
 
   function render() {
+    console.log("EM eye: " +eye);
+    console.log("EM center: " + [eye[0]+directionView[0],eye[1]+directionView[1],eye[2]+directionView[2]]);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     0;
@@ -291,7 +377,11 @@ function setup(shaders) {
       false,
       flatten(mProjection),
     );
-
+     if(isPlayerView){
+      //view = lookAt([1,1,1],[0,0,0],[0,1,0]);
+      let center = [eye[0]+directionView[0],eye[1]+directionView[1],eye[2]+directionView[2]];
+      view = lookAt(eye ,center ,up); 
+    }
     loadMatrix(view);
     cityHel();
   }
