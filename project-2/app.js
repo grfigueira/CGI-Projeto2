@@ -55,7 +55,7 @@ const WIND_RESISTANCE = 10.0; // m/s^2
 
 
 //Helicopter movement
-const AUTOMATIC_ANIMATION_RADIUS = 10.0;
+const AUTOMATIC_ANIMATION_RADIUS = 50.0;
 const HELICOPTER_MAX_SPEED = 40;
 const HELICOPTER_ANGLE_CHANGE = 10;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
@@ -205,19 +205,19 @@ function setup(shaders) {
         }
         break;
       case "r":
-        if(helicopterPosY!=0.0){
+        if(helicopterPosY!=0.0 && !isAutomaticAnimation){
          if(helicopterSpeed<HELICOPTER_MAX_SPEED)
             helicopterSpeed++;}
       break;
       case "g":
-        if(helicopterPosY!=0.0){
+        if(helicopterPosY!=0.0 && !isAutomaticAnimation){
           helicopterAngleY+=HELICOPTER_ANGLE_CHANGE;
           if(helicopterSpeed<HELICOPTER_MAX_SPEED){
           helicopterSpeed+=0.3*speed*HELICOPTER_ANGLE_CHANGE*HELICOPTER_ANGLE_CHANGE;}}
       break;
 
       case "d":
-        if(helicopterPosY!=0.0){
+        if(helicopterPosY!=0.0 && !isAutomaticAnimation){
           helicopterAngleY-=HELICOPTER_ANGLE_CHANGE;
           if(helicopterSpeed<HELICOPTER_MAX_SPEED){
           helicopterSpeed+=0.3*speed*HELICOPTER_ANGLE_CHANGE*HELICOPTER_ANGLE_CHANGE;}}
@@ -246,6 +246,7 @@ function setup(shaders) {
          VP_DISTANCE++;
      break;
      case "z":
+      //Troca o tipo de animacao para manual/automatica
       isAutomaticAnimation = !isAutomaticAnimation;
       hasToRestart = true;
       break;
@@ -259,6 +260,7 @@ function setup(shaders) {
       3 * VP_DISTANCE,
     );
   };
+
 
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -547,10 +549,10 @@ function setup(shaders) {
   }
 
   function helicopterFlight(){
+    //Utiliza a força centrifuga para calcular velocidade
     if(isAutomaticAnimation && helicopterPosY != 0.0){
-      helicopterSpeed= speed*(HELICOPTER_ANGLE_CHANGE/2.0)*(HELICOPTER_ANGLE_CHANGE/2.0)*AUTOMATIC_ANIMATION_RADIUS;
-      helicopterAngleY+=speed*HELICOPTER_ANGLE_CHANGE/2.0;
-      console.log(helicopterSpeed);
+      helicopterSpeed = speed*(HELICOPTER_ANGLE_CHANGE)*(HELICOPTER_ANGLE_CHANGE)*AUTOMATIC_ANIMATION_RADIUS/(3*Math.PI);
+      helicopterAngleY += speed*HELICOPTER_ANGLE_CHANGE;
     }
     helicopterSpeedCalcule();
     helicopterPosCalcule();
