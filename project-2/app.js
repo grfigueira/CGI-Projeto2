@@ -19,6 +19,7 @@ import {
 import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
+import * as PYRAMID from "../../libs/objects/pyramid.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -56,7 +57,7 @@ const WORLD_X_LOWER_LIMIT = -100.0;
 const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
-const GRAIVTY = 10.0; // m/s^2
+const GRAVITY = 10.0; // m/s^2
 const WIND_RESISTANCE = 10.0; // m/s^2
 
 //Helicopter movement
@@ -124,6 +125,16 @@ const FEET_Z = BODY_SIZE_Z;
 const CRATE_SIZE = 5.0;
 
 const CENTER_SPHERE_SIZE = 2.0;
+
+//Building
+const BASE_HEIGHT = 2.0;
+const BASE_SIZE = 9.0;
+
+const BUILDING_SIZE = BASE_SIZE - BASE_SIZE * 0.2;
+const BUILDING_HEIGHT = 24.0;
+
+const ROOF_HEIGHT = 4.0;
+const ROOF_SIZE = BASE_SIZE;
 
 //const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
 const axonotricView = lookAt(
@@ -306,6 +317,7 @@ function setup(shaders) {
   SPHERE.init(gl);
   CYLINDER.init(gl);
   CUBE.init(gl);
+  PYRAMID.init(gl);
   gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
   window.requestAnimationFrame(render);
 
@@ -611,8 +623,49 @@ function setup(shaders) {
     pushMatrix();
     crate();
     popMatrix();
+    pushMatrix();
+    multTranslation([-20.0, 0.0, -20.0]);
+    building();
+    popMatrix();
   }
 
+  function base() {
+    multScale([BASE_SIZE, BASE_HEIGHT, BASE_SIZE]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function buildingBody() {
+    multScale([BUILDING_SIZE, BUILDING_HEIGHT, BUILDING_SIZE]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function buildingRoof() {
+    multScale([ROOF_SIZE, ROOF_HEIGHT, ROOF_SIZE]);
+
+    uploadModelView();
+
+    PYRAMID.draw(gl, program, mode);
+  }
+
+  function building() {
+    pushMatrix();
+    base();
+    popMatrix();
+    pushMatrix();
+    multTranslation([0, BUILDING_HEIGHT / 2, 0]);
+    buildingBody();
+    popMatrix();
+    pushMatrix();
+    multTranslation([0, BUILDING_HEIGHT + BASE_HEIGHT, 0]);
+    buildingRoof();
+    popMatrix();
+  }
   function helicopterStillAnimation() {
     let helicopterHigh = BODY_SIZE_Y / 2.0 +
       (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
@@ -664,7 +717,7 @@ function setup(shaders) {
       helicopterSpeed = 0.0;
     }
 
-    let toAddSpeed = GRAIVTY * speed;
+    let toAddSpeed = GRAVITY * speed;
     if (heliceSpeed - toAddSpeed > HELICE_FLYING_SPEED) {
       heliceSpeed -= toAddSpeed;
     }
