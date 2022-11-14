@@ -30,7 +30,7 @@ let animation = true; // Animation is running
 
 //VIEWCONST
 //View
-const VP_DISTANCE = 10.0;
+let VP_DISTANCE = 50.0;
 const CAMERA_ANGLE_CHANGE = Math.PI/20.0;
 
 let horizontalDirection = 0.0;
@@ -48,9 +48,11 @@ const WORLD_X_LOWER_LIMIT = -100.0;
 const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
+const GRAIVTY = 10.0;
+
 
 //Helicopter movement
-
+const HELICOPTER_MAX_SPEED = 10;
 const HELICOPTER_ANGLE_CHANGE = 20;
 let helicopterAngle = 0.0;
 let helicopterPosX = 0.0;
@@ -64,7 +66,9 @@ const HELICE_SIZE_Y = HELICE_DIAMETER*1.0/30.0;
 const HELICE_SIZE_Z = HELICE_DIAMETER*1.0/8.0;
 
 //All helices
-const HELICE_SPEED = 1000;
+let heliceSpeed = 0;
+let heliceShowSpeed = 0;
+const HELICE_FLYING_SPEED = 1000;
 const HELICE_NUM = 3;
 
 //Helice connector
@@ -216,21 +220,39 @@ function setup(shaders) {
       break;
 
       case "y":
-         if(isWithinWorldLimit(helicopterPosX,helicopterPosY+1,helicopterPosZ)){
-          helicopterPosY++;}
+          if(heliceSpeed<HELICE_FLYING_SPEED){
+            heliceSpeed+=50
+            heliceShowSpeed+=50;}
           else{
-            helicopterPosY = WORLD_Y_UPPER_LIMIT;
-         } 
+            heliceSpeed+=15.0/((heliceSpeed-HELICE_FLYING_SPEED)+1.0);
+          }
       break;
       case "h":
-        if(isWithinWorldLimit(helicopterPosX,helicopterPosY-1,helicopterPosZ)){
-         helicopterPosY--;}
+        //heliceSpeed-=15.0;
+        let toRemove = speed*(helicopterPosY-WORLD_X_LOWER_LIMIT)/10.0;
+        if(isWithinWorldLimit(helicopterPosX,helicopterPosY-toRemove,helicopterPosZ)){
+          helicopterPosY-=toRemove;}
          else{
           helicopterPosY = WORLD_Y_LOWER_LIMIT;
          }
      break;
+     case "q":
+         VP_DISTANCE--;
+     break;
+     case "a":
+         VP_DISTANCE++;
+     break;  
     }
+    mProjection = ortho(
+      -VP_DISTANCE * aspect,
+      VP_DISTANCE * aspect,
+      -VP_DISTANCE,
+      VP_DISTANCE,
+      -3 * VP_DISTANCE,
+      3 * VP_DISTANCE,
+    );
   };
+
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   SPHERE.init(gl);
@@ -303,7 +325,7 @@ function setup(shaders) {
   function rotHelice() {
     for(let i = 0; i<360;i+=360/HELICE_NUM){
         pushMatrix();
-            multRotationY(HELICE_SPEED * time+i);
+            multRotationY(heliceShowSpeed * time+i);
             multTranslation([HELICE_DIAMETER / 2, 0, 0]);
             helicePart();
         popMatrix();
@@ -419,7 +441,7 @@ function setup(shaders) {
       legConect();
     popMatrix();
     pushMatrix();
-      multScale([.01,1.0,-1.0]);
+      multScale([1.0,1.0,-1.0]);
       multTranslation([0.0,0.0,BODY_SIZE_Z/4]);
       legConect();
     popMatrix();
@@ -488,21 +510,46 @@ function setup(shaders) {
       floor();
     popMatrix();
     pushMatrix();
-      let helicopterHigh = BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2;
-      if(isWithinWorldLimit(helicopterPosX,helicopterPosY,helicopterPosZ) && helicopterPosY != 0.0){
-        helicopterPosY += Math.sin(time*Math.PI)/100.0;}
-      multTranslation([helicopterPosX,helicopterPosY+helicopterHigh,helicopterPosZ]);
+      helicopterFlight();
+      helicopterMovingAnimation();
+      multTranslation([helicopterPosX,helicopterPosY,helicopterPosZ]);
       multRotationY(helicopterAngle);
       helicopter();
     popMatrix();
   }
 
+  function helicopterMovingAnimation(){
+    let balAngle = 0;
+    let helicopterHigh = BODY_SIZE_Y/2.0 + (Math.cos(LEG_ANGLE_Y*Math.PI/180)*LEG_CONECT_Y+FEET_Y)/1.2;
+    if(isWithinWorldLimit(helicopterPosX,helicopterPosY,helicopterPosZ) && helicopterPosY != 0.0){
+      helicopterPosY += Math.sin(time*Math.PI)/100.0;
+      balAngle = 0.5*Math.sin(time*Math.PI);}
+    multRotationZ(balAngle);
+    multTranslation([0,helicopterHigh,0]);
+  }
+
+  function helicopterFlight(){
+    if (helicopterPosY==0.0 && 0<heliceSpeed){
+      heliceSpeed-= heliceSpeed/100.0;
+      heliceShowSpeed -= heliceShowSpeed/100.0;
+      if(heliceSpeed<0.03){
+        heliceShowSpeed = 0;
+        heliceSpeed =0;}
+    }
+    if(heliceSpeed-GRAIVTY*speed>HELICE_FLYING_SPEED){
+      heliceSpeed-=GRAIVTY*speed;
+    if(isWithinWorldLimit(helicopterPosX,helicopterPosY+(heliceSpeed-HELICE_FLYING_SPEED)/HELICE_FLYING_SPEED,helicopterPosZ)){
+      helicopterPosY+=(heliceSpeed-HELICE_FLYING_SPEED)/HELICE_FLYING_SPEED;}
+    }
+  }
+
   function render() {
-    console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
-    console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
-    console.log("helX = " + helicopterPosX);
-    console.log("helZ = " + helicopterPosY);
-    console.log("helZ = "+ helicopterPosZ);
+    //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
+    //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
+    //console.log("helX = " + helicopterPosX);
+    //console.log("helZ = " + helicopterPosY);
+    //console.log("helZ = "+ helicopterPosZ);
+    console.log("Helice speed = " + heliceSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     0;
