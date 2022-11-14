@@ -43,9 +43,13 @@ let zCameraPos = 0;
 let isCenterView = false;
 
 //Crate
-let cratePosX = 9999.0; // Initially spawns out of sight
-let cratePosY = 9999.0;
-let cratePosZ = 9999.0;
+
+const INIT_CRATE_POS_X = 9999.0;
+const INIT_CRATE_POS_Y = 9999.0;
+const INIT_CRATE_POS_Z = 9999.0;
+let cratePosX = INIT_CRATE_POS_X; // Initially spawns out of sight
+let cratePosY = INIT_CRATE_POS_Y;
+let cratePosZ = INIT_CRATE_POS_Z;
 let crateFallSpeed = 5.0;
 
 //World Limits and forces
@@ -123,6 +127,8 @@ const FEET_Z = BODY_SIZE_Z;
 
 //Crate
 const CRATE_SIZE = 5.0;
+let startCrateTime = 0.0;
+const CRATE_DESPAWN_TIME = 5.0;
 
 const CENTER_SPHERE_SIZE = 2.0;
 
@@ -369,6 +375,7 @@ function setup(shaders) {
     cratePosX = helicopterPosX;
     cratePosY = helicopterPosY;
     cratePosZ = helicopterPosZ;
+    startCrateTime = time;
   }
 
   /*
@@ -758,6 +765,12 @@ function setup(shaders) {
     }
   }
 
+  function hideCrate() {
+    cratePosX = INIT_CRATE_POS_X;
+    cratePosY = INIT_CRATE_POS_Y;
+    cratePosZ = INIT_CRATE_POS_Z;
+  }
+
   function render() {
     //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
     //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
@@ -799,6 +812,9 @@ function setup(shaders) {
 
     if (isWithinWorldLimit(cratePosX, cratePosY, cratePosZ)) {
       cratePosY = cratePosY - crateFallSpeed * speed;
+    }
+    if (time - startCrateTime > CRATE_DESPAWN_TIME) {
+      hideCrate();
     }
     loadMatrix(view);
     world();
