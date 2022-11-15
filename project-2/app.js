@@ -640,7 +640,7 @@ function setup(shaders) {
     building();
     popMatrix();
     pushMatrix();
-        multTranslation([-60.0,0.0,-60.0]);
+        multTranslation([-60.0,BUILDING_FLOOR_HIGH/2.0,-60.0]);
         buildingType1(10);
     popMatrix();
   }
