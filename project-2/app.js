@@ -44,13 +44,10 @@ let isCenterView = false;
 
 //Crate
 
-const INIT_CRATE_POS_X = 9999.0;
-const INIT_CRATE_POS_Y = 9999.0;
-const INIT_CRATE_POS_Z = 9999.0;
-let cratePosX = INIT_CRATE_POS_X; // Initially spawns out of sight
-let cratePosY = INIT_CRATE_POS_Y;
-let cratePosZ = INIT_CRATE_POS_Z;
-let crateFallSpeed = 5.0;
+let crateInstances = [];
+let crateFallSpeed = 15.0;
+const CRATE_DESPAWN_TIME = 2.0;
+const CRATE_SIZE = 3.5;
 
 //World Limits and forces
 const WORLD_X_UPPER_LIMIT = 100.0;
@@ -125,11 +122,6 @@ const FEET_X = 1 / 4;
 const FEET_Y = 1 / 4;
 const FEET_Z = BODY_SIZE_Z;
 
-//Crate
-const CRATE_SIZE = 5.0;
-let startCrateTime = 0.0;
-const CRATE_DESPAWN_TIME = 5.0;
-
 const CENTER_SPHERE_SIZE = 2.0;
 
 //Buildings
@@ -145,7 +137,7 @@ const ROOF_SIZE = BASE_SIZE;
 
 //type2
 const BUILDING_T2_LEN = 22.0;
-const BUILDING_FLOOR_HIGH = 5.0
+const BUILDING_FLOOR_HIGH = 5.0;
 
 //const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
 const axonotricView = lookAt(
@@ -377,10 +369,12 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
-    cratePosX = helicopterPosX;
-    cratePosY = helicopterPosY;
-    cratePosZ = helicopterPosZ;
-    startCrateTime = time;
+    crateInstances.push({
+      posX: helicopterPosX,
+      posY: helicopterPosY,
+      posZ: helicopterPosZ,
+      startTime: time,
+    });
   }
 
   /*
@@ -603,7 +597,7 @@ function setup(shaders) {
     SPHERE.draw(gl, program, mode);
   }
 
-  function crate() {
+  function crate(cratePosX, cratePosY, cratePosZ) {
     multTranslation([cratePosX, cratePosY, cratePosZ]);
     multScale([CRATE_SIZE, CRATE_SIZE, CRATE_SIZE]);
     uploadModelView();
@@ -616,32 +610,34 @@ function setup(shaders) {
 
   function world() {
     pushMatrix();
-      multTranslation([0.0, -1.0, 0.0]);
-      floor();
+    multTranslation([0.0, -1.0, 0.0]);
+    floor();
     popMatrix();
     pushMatrix();
-      multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
-      helicopterStillAnimation();
-      helicopterFlight();
-      multRotationY(helicopterAngleY);
-      multRotationX(
+    multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
+    helicopterStillAnimation();
+    helicopterFlight();
+    multRotationY(helicopterAngleY);
+    multRotationX(
       HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
     );
-      helicopter();
+    helicopter();
     popMatrix();
     pushMatrix();
-      centerSphere();
+    centerSphere();
     popMatrix();
+    for (let crateObj of crateInstances) {
+      pushMatrix();
+      crate(crateObj.posX, crateObj.posY, crateObj.posZ);
+      popMatrix();
+    }
     pushMatrix();
-      crate();
-    popMatrix();
-    pushMatrix();
-      multTranslation([-20.0, 0.0, -20.0]);
+    multTranslation([-20.0, 0.0, -20.0]);
     building();
     popMatrix();
     pushMatrix();
-        multTranslation([-60.0,BUILDING_FLOOR_HIGH/2.0,-60.0]);
-        buildingType1(10);
+    multTranslation([-60.0, BUILDING_FLOOR_HIGH / 2.0, -60.0]);
+    buildingType1(10);
     popMatrix();
   }
 
@@ -671,186 +667,184 @@ function setup(shaders) {
 
   function building() {
     pushMatrix();
-      base();
+    base();
     popMatrix();
     pushMatrix();
-      multTranslation([0, BUILDING_HEIGHT / 2, 0]);
-      buildingBody();
+    multTranslation([0, BUILDING_HEIGHT / 2, 0]);
+    buildingBody();
     popMatrix();
     pushMatrix();
-      multTranslation([0, BUILDING_HEIGHT + BASE_HEIGHT, 0]);
-      buildingRoof();
+    multTranslation([0, BUILDING_HEIGHT + BASE_HEIGHT, 0]);
+    buildingRoof();
     popMatrix();
   }
 
-  function buildingFloorBase(){
-    multScale([BUILDING_T2_LEN,BUILDING_FLOOR_HIGH,BUILDING_T2_LEN]);
+  function buildingFloorBase() {
+    multScale([BUILDING_T2_LEN, BUILDING_FLOOR_HIGH, BUILDING_T2_LEN]);
 
     uploadModelView();
 
     CUBE.draw(gl, program, mode);
   }
 
-  function columnType1(){
-    multScale([0.8,BUILDING_FLOOR_HIGH,0.5]);
+  function columnType1() {
+    multScale([0.8, BUILDING_FLOOR_HIGH, 0.5]);
 
     uploadModelView();
 
     CUBE.draw(gl, program, mode);
   }
 
-  function wallExtraType1(){
-    multScale([BUILDING_T2_LEN,1.0,0.3]);
+  function wallExtraType1() {
+    multScale([BUILDING_T2_LEN, 1.0, 0.3]);
 
     uploadModelView();
 
     CUBE.draw(gl, program, mode);
   }
 
-  function buildingFloorType1(){
+  function buildingFloorType1() {
     pushMatrix();
-      buildingFloorBase();
+    buildingFloorBase();
     popMatrix();
     pushMatrix();
-      multTranslation([BUILDING_T2_LEN/2.0,0.0,BUILDING_T2_LEN/2.0]);
-      columnType1();
+    multTranslation([BUILDING_T2_LEN / 2.0, 0.0, BUILDING_T2_LEN / 2.0]);
+    columnType1();
     popMatrix();
     pushMatrix();
-      multTranslation([-BUILDING_T2_LEN/2.0,0.0,-BUILDING_T2_LEN/2.0]);
-      columnType1();
+    multTranslation([-BUILDING_T2_LEN / 2.0, 0.0, -BUILDING_T2_LEN / 2.0]);
+    columnType1();
     popMatrix();
     pushMatrix();
-      multTranslation([BUILDING_T2_LEN/2.0,0.0,-BUILDING_T2_LEN/2.0]);
-      columnType1();
+    multTranslation([BUILDING_T2_LEN / 2.0, 0.0, -BUILDING_T2_LEN / 2.0]);
+    columnType1();
     popMatrix();
     pushMatrix();
-      multTranslation([-BUILDING_T2_LEN/2.0,0.0,BUILDING_T2_LEN/2.0]);
-      columnType1();
+    multTranslation([-BUILDING_T2_LEN / 2.0, 0.0, BUILDING_T2_LEN / 2.0]);
+    columnType1();
     popMatrix();
   }
 
-  function buildingFloorType2(){
+  function buildingFloorType2() {
     pushMatrix();
-      buildingFloorType1();
+    buildingFloorType1();
     popMatrix();
-    for(let i = 0; i<360; i+=90){
-    pushMatrix();
+    for (let i = 0; i < 360; i += 90) {
+      pushMatrix();
       multRotationY(i);
-      multTranslation([0.0,BUILDING_FLOOR_HIGH/2.0,BUILDING_T2_LEN/2.0]);
+      multTranslation([0.0, BUILDING_FLOOR_HIGH / 2.0, BUILDING_T2_LEN / 2.0]);
       wallExtraType1();
-    popMatrix();}
-  }
-
-  function windowConstructType1(){
-    for(let i = 0; i< 5 ; i++){
-        pushMatrix();
-          multTranslation([i*BUILDING_T2_LEN/5,0.0,BUILDING_T2_LEN/2.0]);
-          multScale([0.4,0.4,0.4]);
-          windowCompleteType1();
-        popMatrix();
-    }
-  }
-
-  function windowConstructType2(){
-    for(let i = 0; i< 3; i++){
-      pushMatrix();
-      multTranslation([i*BUILDING_T2_LEN/3,0.0,BUILDING_T2_LEN/2.0]);
-      multScale([0.4,0.4,0.4]);
-        windowCompleteType2();
       popMatrix();
     }
   }
 
-  function windowConstructType3(){
-
-  }
-
-  function completeFloorType1(){
-    pushMatrix();
-    buildingFloorType1();
-    popMatrix();
-    for(let i = 0; i<360;i+= 90){
+  function windowConstructType1() {
+    for (let i = 0; i < 5; i++) {
       pushMatrix();
-        multRotationY(i);
-        multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
-        windowConstructType1();
+      multTranslation([i * BUILDING_T2_LEN / 5, 0.0, BUILDING_T2_LEN / 2.0]);
+      multScale([0.4, 0.4, 0.4]);
+      windowCompleteType1();
       popMatrix();
     }
   }
-  function completeFloorType2(){
+
+  function windowConstructType2() {
+    for (let i = 0; i < 3; i++) {
+      pushMatrix();
+      multTranslation([i * BUILDING_T2_LEN / 3, 0.0, BUILDING_T2_LEN / 2.0]);
+      multScale([0.4, 0.4, 0.4]);
+      windowCompleteType2();
+      popMatrix();
+    }
+  }
+
+  function windowConstructType3() {
+  }
+
+  function completeFloorType1() {
     pushMatrix();
     buildingFloorType1();
     popMatrix();
-    for(let i = 0; i<360;i+= 90){
-    pushMatrix();
+    for (let i = 0; i < 360; i += 90) {
+      pushMatrix();
       multRotationY(i);
-      multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
-      windowConstructType2();
-    popMatrix();}
-  }
-
-  function completeFloorType3(){
-    pushMatrix();
-      buildingFloorType2();
-    popMatrix();
-    for(let i = 0; i<360;i+= 90){
-      pushMatrix();
-        multRotationY(i);
-        multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
-        windowConstructType1();
+      multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
+      windowConstructType1();
       popMatrix();
-    
+    }
+  }
+  function completeFloorType2() {
+    pushMatrix();
+    buildingFloorType1();
+    popMatrix();
+    for (let i = 0; i < 360; i += 90) {
+      pushMatrix();
+      multRotationY(i);
+      multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
+      windowConstructType2();
+      popMatrix();
     }
   }
 
-  function windowSide(){
-    multScale([5.0,0.5,0.3]);
+  function completeFloorType3() {
+    pushMatrix();
+    buildingFloorType2();
+    popMatrix();
+    for (let i = 0; i < 360; i += 90) {
+      pushMatrix();
+      multRotationY(i);
+      multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
+      windowConstructType1();
+      popMatrix();
+    }
+  }
+
+  function windowSide() {
+    multScale([5.0, 0.5, 0.3]);
 
     uploadModelView();
 
     CUBE.draw(gl, program, mode);
   }
 
-
-  function windowCompleteType1(){
+  function windowCompleteType1() {
     pushMatrix();
-      windowSide();
+    windowSide();
     popMatrix();
     pushMatrix();
-      multTranslation([2.5,0.0,0.0]);
-      multRotationZ(90);
-      multScale([1.5,1.0,1.0]);
-      windowSide();
+    multTranslation([2.5, 0.0, 0.0]);
+    multRotationZ(90);
+    multScale([1.5, 1.0, 1.0]);
+    windowSide();
     popMatrix();
     pushMatrix();
-      multTranslation([-2.5,0.0,0.0]);
-      multRotationZ(90);
-      multScale([1.5,1.0,1.0]);
-      windowSide();
+    multTranslation([-2.5, 0.0, 0.0]);
+    multRotationZ(90);
+    multScale([1.5, 1.0, 1.0]);
+    windowSide();
     popMatrix();
     pushMatrix();
-      multTranslation([0.0,2.5*1.5-0.5/2.0,0.0]);
-      windowSide();
+    multTranslation([0.0, 2.5 * 1.5 - 0.5 / 2.0, 0.0]);
+    windowSide();
     popMatrix();
     pushMatrix();
-      multTranslation([0.0,-(2.5*1.5-0.5/2.0),0.0]);
-      windowSide();
-    popMatrix();
-  }
-
-  function windowCompleteType2(){
-    pushMatrix();
-      windowCompleteType1();
-    popMatrix();
-    pushMatrix();
-      multTranslation([5+0.5,0.0,0.0]);
-      windowCompleteType1();
+    multTranslation([0.0, -(2.5 * 1.5 - 0.5 / 2.0), 0.0]);
+    windowSide();
     popMatrix();
   }
 
+  function windowCompleteType2() {
+    pushMatrix();
+    windowCompleteType1();
+    popMatrix();
+    pushMatrix();
+    multTranslation([5 + 0.5, 0.0, 0.0]);
+    windowCompleteType1();
+    popMatrix();
+  }
 
-//ESTA FUNCAO É UTILIZADA APENAS PARA TESTAR FIGURAS
-/*
+  //ESTA FUNCAO É UTILIZADA APENAS PARA TESTAR FIGURAS
+  /*
   function testConstruct(){
     pushMatrix();
       multTranslation([0.0, -1.0, 0.0]);
@@ -862,22 +856,22 @@ function setup(shaders) {
     popMatrix();
   }*/
 
-  function buildingType1(nFloors){
-    for(let i = 0; i<nFloors;i++){
-    pushMatrix();
-      multTranslation([0.0,BUILDING_FLOOR_HIGH*i,0.0]);
-      if(i%4 == 0){
+  function buildingType1(nFloors) {
+    for (let i = 0; i < nFloors; i++) {
+      pushMatrix();
+      multTranslation([0.0, BUILDING_FLOOR_HIGH * i, 0.0]);
+      if (i % 4 == 0) {
         completeFloorType3();
-      }else{
-        if(i%3 == 0 || i%2 == 0){
+      } else {
+        if (i % 3 == 0 || i % 2 == 0) {
           completeFloorType2();
-        }else{
-      completeFloorType1();}}
-    popMatrix();
+        } else {
+          completeFloorType1();
+        }
+      }
+      popMatrix();
     }
   }
-
-
 
   function helicopterStillAnimation() {
     let helicopterHigh = BODY_SIZE_Y / 2.0 +
@@ -1011,12 +1005,19 @@ function setup(shaders) {
       hasToRestart = false;
     }
 
-    if (isWithinWorldLimit(cratePosX, cratePosY, cratePosZ)) {
-      cratePosY = cratePosY - crateFallSpeed * speed;
+    for (let crate of crateInstances) {
+      if (isWithinWorldLimit(crate.posX, crate.posY, crate.posZ)) {
+        crate.posY = crate.posY - crateFallSpeed * speed;
+      }
+      if (time - crate.startTime > CRATE_DESPAWN_TIME) {
+        crateInstances.splice(crateInstances.indexOf(crate), 1);
+      }
     }
-    if (time - startCrateTime > CRATE_DESPAWN_TIME) {
-      hideCrate();
-    }
+
+    //Hide crate after CRATE_DESPAWN_TIME seconds
+    //if (time - startCrateTime > CRATE_DESPAWN_TIME) {
+    //  hideCrate();
+    //}
     loadMatrix(view);
     //testConstruct();
     world();
