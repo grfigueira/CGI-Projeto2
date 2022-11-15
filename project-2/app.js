@@ -33,7 +33,7 @@ let isAutomaticAnimation = true;
 
 //VIEWCONST
 //View
-let VP_DISTANCE = 50.0;
+let VP_DISTANCE = 100.0;
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 
 let horizontalDirection = 0.0;
@@ -132,7 +132,8 @@ const CRATE_DESPAWN_TIME = 5.0;
 
 const CENTER_SPHERE_SIZE = 2.0;
 
-//Building
+//Buildings
+//type1
 const BASE_HEIGHT = 2.0;
 const BASE_SIZE = 9.0;
 
@@ -141,6 +142,10 @@ const BUILDING_HEIGHT = 24.0;
 
 const ROOF_HEIGHT = 4.0;
 const ROOF_SIZE = BASE_SIZE;
+
+//type2
+const BUILDING_T2_LEN = 22.0;
+const BUILDING_FLOOR_HIGH = 5.0
 
 //const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
 const axonotricView = lookAt(
@@ -634,6 +639,10 @@ function setup(shaders) {
       multTranslation([-20.0, 0.0, -20.0]);
     building();
     popMatrix();
+    pushMatrix();
+        multTranslation([-60.0,0.0,-60.0]);
+        buildingType1(10);
+    popMatrix();
   }
 
   function base() {
@@ -673,6 +682,203 @@ function setup(shaders) {
       buildingRoof();
     popMatrix();
   }
+
+  function buildingFloorBase(){
+    multScale([BUILDING_T2_LEN,BUILDING_FLOOR_HIGH,BUILDING_T2_LEN]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function columnType1(){
+    multScale([0.8,BUILDING_FLOOR_HIGH,0.5]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function wallExtraType1(){
+    multScale([BUILDING_T2_LEN,1.0,0.3]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+  function buildingFloorType1(){
+    pushMatrix();
+      buildingFloorBase();
+    popMatrix();
+    pushMatrix();
+      multTranslation([BUILDING_T2_LEN/2.0,0.0,BUILDING_T2_LEN/2.0]);
+      columnType1();
+    popMatrix();
+    pushMatrix();
+      multTranslation([-BUILDING_T2_LEN/2.0,0.0,-BUILDING_T2_LEN/2.0]);
+      columnType1();
+    popMatrix();
+    pushMatrix();
+      multTranslation([BUILDING_T2_LEN/2.0,0.0,-BUILDING_T2_LEN/2.0]);
+      columnType1();
+    popMatrix();
+    pushMatrix();
+      multTranslation([-BUILDING_T2_LEN/2.0,0.0,BUILDING_T2_LEN/2.0]);
+      columnType1();
+    popMatrix();
+  }
+
+  function buildingFloorType2(){
+    pushMatrix();
+      buildingFloorType1();
+    popMatrix();
+    for(let i = 0; i<360; i+=90){
+    pushMatrix();
+      multRotationY(i);
+      multTranslation([0.0,BUILDING_FLOOR_HIGH/2.0,BUILDING_T2_LEN/2.0]);
+      wallExtraType1();
+    popMatrix();}
+  }
+
+  function windowConstructType1(){
+    for(let i = 0; i< 5 ; i++){
+        pushMatrix();
+          multTranslation([i*BUILDING_T2_LEN/5,0.0,BUILDING_T2_LEN/2.0]);
+          multScale([0.4,0.4,0.4]);
+          windowCompleteType1();
+        popMatrix();
+    }
+  }
+
+  function windowConstructType2(){
+    for(let i = 0; i< 3; i++){
+      pushMatrix();
+      multTranslation([i*BUILDING_T2_LEN/3,0.0,BUILDING_T2_LEN/2.0]);
+      multScale([0.4,0.4,0.4]);
+        windowCompleteType2();
+      popMatrix();
+    }
+  }
+
+  function windowConstructType3(){
+
+  }
+
+  function completeFloorType1(){
+    pushMatrix();
+    buildingFloorType1();
+    popMatrix();
+    for(let i = 0; i<360;i+= 90){
+      pushMatrix();
+        multRotationY(i);
+        multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
+        windowConstructType1();
+      popMatrix();
+    }
+  }
+  function completeFloorType2(){
+    pushMatrix();
+    buildingFloorType1();
+    popMatrix();
+    for(let i = 0; i<360;i+= 90){
+    pushMatrix();
+      multRotationY(i);
+      multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
+      windowConstructType2();
+    popMatrix();}
+  }
+
+  function completeFloorType3(){
+    pushMatrix();
+      buildingFloorType2();
+    popMatrix();
+    for(let i = 0; i<360;i+= 90){
+      pushMatrix();
+        multRotationY(i);
+        multTranslation([-(BUILDING_T2_LEN/2.0 - 2.5),0.0,0.0]);
+        windowConstructType1();
+      popMatrix();
+    
+    }
+  }
+
+  function windowSide(){
+    multScale([5.0,0.5,0.3]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
+
+
+  function windowCompleteType1(){
+    pushMatrix();
+      windowSide();
+    popMatrix();
+    pushMatrix();
+      multTranslation([2.5,0.0,0.0]);
+      multRotationZ(90);
+      multScale([1.5,1.0,1.0]);
+      windowSide();
+    popMatrix();
+    pushMatrix();
+      multTranslation([-2.5,0.0,0.0]);
+      multRotationZ(90);
+      multScale([1.5,1.0,1.0]);
+      windowSide();
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0,2.5*1.5-0.5/2.0,0.0]);
+      windowSide();
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0,-(2.5*1.5-0.5/2.0),0.0]);
+      windowSide();
+    popMatrix();
+  }
+
+  function windowCompleteType2(){
+    pushMatrix();
+      windowCompleteType1();
+    popMatrix();
+    pushMatrix();
+      multTranslation([5+0.5,0.0,0.0]);
+      windowCompleteType1();
+    popMatrix();
+  }
+
+
+//ESTA FUNCAO É UTILIZADA APENAS PARA TESTAR FIGURAS
+/*
+  function testConstruct(){
+    pushMatrix();
+      multTranslation([0.0, -1.0, 0.0]);
+      floor();
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0,BUILDING_FLOOR_HIGH/2.0,0.0]);
+      buildingType1(10);
+    popMatrix();
+  }*/
+
+  function buildingType1(nFloors){
+    for(let i = 0; i<nFloors;i++){
+    pushMatrix();
+      multTranslation([0.0,BUILDING_FLOOR_HIGH*i,0.0]);
+      if(i%4 == 0){
+        completeFloorType3();
+      }else{
+        if(i%3 == 0 || i%2 == 0){
+          completeFloorType2();
+        }else{
+      completeFloorType1();}}
+    popMatrix();
+    }
+  }
+
+
+
   function helicopterStillAnimation() {
     let helicopterHigh = BODY_SIZE_Y / 2.0 +
       (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
@@ -741,7 +947,7 @@ function setup(shaders) {
     ) {
       helicopterPosY += toAddY;
     }
-    
+
     let toAddZ = helicopterSpeed * speed *
       Math.cos(helicopterAngleY * Math.PI / 180);
     if (
@@ -776,20 +982,14 @@ function setup(shaders) {
     //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
     //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
     //console.log("helX = " + helicopterPosX);
-    console.log("helY = " + helicopterPosY);
+    //console.log("helY = " + helicopterPosY);
     //console.log("helZ = "+ helicopterPosZ);
-    console.log("Helice speed = " + heliceSpeed);
-    console.log("Inclinação da helice = " + helicopterAngleY);
-    console.log(
-      "Distancia ao centro: " +
-        Math.sqrt(
-          helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ,
-        ),
-    );
-    console.log("Speed = " + helicopterSpeed);
+    //console.log("Helice speed = " + heliceSpeed);
+    //console.log("Inclinação da helice = " + helicopterAngleY);
+    //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
+    //console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
-    0;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
 
@@ -818,6 +1018,7 @@ function setup(shaders) {
       hideCrate();
     }
     loadMatrix(view);
+    //testConstruct();
     world();
   }
 }
