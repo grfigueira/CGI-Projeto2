@@ -3,7 +3,7 @@ import {
   loadShadersFromURLS,
   setupWebGL,
 } from "../../libs/utils.js";
-import { flatten, lookAt, ortho } from "../../libs/MV.js";
+import { flatten, lookAt, ortho, vec3} from "../../libs/MV.js";
 import {
   loadMatrix,
   modelView,
@@ -13,7 +13,7 @@ import {
   multScale,
   multTranslation,
   popMatrix,
-  pushMatrix,
+  pushMatrix
 } from "../../libs/stack.js";
 
 import * as SPHERE from "../../libs/objects/sphere.js";
@@ -45,7 +45,6 @@ let isCenterView = false;
 //Crate
 
 let crateInstances = [];
-let crateFallSpeed = 15.0;
 const CRATE_DESPAWN_TIME = 2.0;
 const CRATE_SIZE = 3.5;
 
@@ -316,7 +315,7 @@ function setup(shaders) {
     );
   };
 
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(204.0 / 255.0, 151.0 / 255.0, 142.0 / 255.0, 1.0); // Background cinzento
   SPHERE.init(gl);
   CYLINDER.init(gl);
   CUBE.init(gl);
@@ -374,6 +373,8 @@ function setup(shaders) {
       posY: helicopterPosY,
       posZ: helicopterPosZ,
       startTime: time,
+      speed: helicopterSpeed,
+      angle: helicopterAngleY,
     });
   }
 
@@ -418,9 +419,11 @@ function setup(shaders) {
   */
   function helice() {
     pushMatrix();
+    selectColor(vec3(255.0, 255.0, 0.0));
     heliceConect();
     popMatrix();
     pushMatrix();
+    selectColor(vec3(0.0, 0.0, 255.0));
     rotHelice();
     popMatrix();
   }
@@ -450,14 +453,14 @@ function setup(shaders) {
   */
   function tailTip() {
     pushMatrix();
-    multRotationX(-20);
-    tailEnd();
+      multRotationX(-20);
+      tailEnd();
     popMatrix();
     pushMatrix();
-    multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0]);
-    multRotationZ(90);
-    multScale([0.3, 0.3, 0.3]);
-    helice();
+      multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0]);
+      multRotationZ(90);
+      multScale([0.3, 0.3, 0.3]);
+      helice();
     popMatrix();
   }
 
@@ -465,12 +468,13 @@ function setup(shaders) {
     Este método desenha a cauda completa
   */
   function tail() {
+    selectColor(vec3(255.0, 0.0, 0.0));
     pushMatrix();
-    tailConnector();
+      tailConnector();
     popMatrix();
     pushMatrix();
-    multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0]);
-    tailTip();
+      multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0]);
+      tailTip();
     popMatrix();
   }
 
@@ -480,6 +484,7 @@ function setup(shaders) {
   function body() {
     multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
 
+    selectColor(vec3(255.0, 0.0, 0.0));
     uploadModelView();
 
     SPHERE.draw(gl, program, mode);
@@ -539,6 +544,7 @@ function setup(shaders) {
   */
 
   function feet() {
+    selectColor(vec3(255.0, 255.0, 0.0));
     pushMatrix();
     multTranslation([-BODY_SIZE_X / 4.0, 0.0, 0.0]);
     oneLeg();
@@ -580,19 +586,27 @@ function setup(shaders) {
     feet();
     popMatrix();
   }
+  // Usar isto antes de uma chamada draw() para mudar a cor
+  function selectColor(color){
+    let floorColor = vec3(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0);
+    const uColor = gl.getUniformLocation(program, "uColor");
+    gl.useProgram(program);
+    gl.uniform3fv(uColor, flatten(floorColor));
+  }
+
   /*
   Desenha o chão
   */
   function floor() {
     multScale([WORLD_X_UPPER_LIMIT * 2.0, 1.0, WORLD_Z_UPPER_LIMIT * 2.0]);
-
+    selectColor(vec3(192.0, 189.0, 165.0));
     uploadModelView();
-    //SPHERE.draw(gl,program,mode);
     CUBE.draw(gl, program, mode);
   }
 
   function centerSphere() {
     multScale([CENTER_SPHERE_SIZE, CENTER_SPHERE_SIZE, CENTER_SPHERE_SIZE]);
+    selectColor(vec3(255.0, 0.0, 0.0));
     uploadModelView();
     SPHERE.draw(gl, program, mode);
   }
@@ -600,6 +614,7 @@ function setup(shaders) {
   function crate(cratePosX, cratePosY, cratePosZ) {
     multTranslation([cratePosX, cratePosY, cratePosZ]);
     multScale([CRATE_SIZE, CRATE_SIZE, CRATE_SIZE]);
+    selectColor(vec3(255.0, 0.0, 0.0));
     uploadModelView();
     CUBE.draw(gl, program, mode);
   }
@@ -628,6 +643,7 @@ function setup(shaders) {
     popMatrix();
     for (let crateObj of crateInstances) {
       pushMatrix();
+      moveCrate(crateObj);
       crate(crateObj.posX, crateObj.posY, crateObj.posZ);
       popMatrix();
     }
@@ -667,14 +683,17 @@ function setup(shaders) {
 
   function building() {
     pushMatrix();
+    selectColor(vec3(243.0, 156.0, 107.0));
     base();
     popMatrix();
     pushMatrix();
     multTranslation([0, BUILDING_HEIGHT / 2, 0]);
+    selectColor(vec3(255.0, 56.0, 100.0));
     buildingBody();
     popMatrix();
     pushMatrix();
     multTranslation([0, BUILDING_HEIGHT + BASE_HEIGHT, 0]);
+    selectColor(vec3(38.0, 20.0, 71.0));
     buildingRoof();
     popMatrix();
   }
@@ -798,19 +817,19 @@ function setup(shaders) {
       popMatrix();
     }
   }
-  function roofType1(){
+  function roofType1() {
     pushMatrix();
-      roofPartType1();
+    roofPartType1();
     popMatrix();
     pushMatrix();
-      multTranslation([0,0.7/2.0,0]);
-      multScale([0.9,1.0,0.9]);
-      roofPartType1();
+    multTranslation([0, 0.7 / 2.0, 0]);
+    multScale([0.9, 1.0, 0.9]);
+    roofPartType1();
     popMatrix();
   }
 
-  function roofPartType1(){
-    multScale([BUILDING_T2_LEN+1.5, 0.7, BUILDING_T2_LEN+1.5]);
+  function roofPartType1() {
+    multScale([BUILDING_T2_LEN + 1.5, 0.7, BUILDING_T2_LEN + 1.5]);
 
     uploadModelView();
 
@@ -877,21 +896,30 @@ function setup(shaders) {
   function buildingType1(nFloors) {
     for (let i = 0; i < nFloors; i++) {
       pushMatrix();
+      selectColor(vec3(255.0, 56.0, 100.0));
       multTranslation([0.0, BUILDING_FLOOR_HIGH * i, 0.0]);
       if (i % 4 == 0) {
+        selectColor(vec3(38.0, 20.0, 71.0));
         completeFloorType3();
       } else {
         if (i % 3 == 0 || i % 2 == 0) {
+          selectColor(vec3(255.0, 56.0, 100.0));
           completeFloorType2();
         } else {
+          selectColor(vec3(255.0, 56.0, 100.0));
           completeFloorType1();
         }
       }
       popMatrix();
     }
     pushMatrix();
-      multTranslation([0.0,BUILDING_FLOOR_HIGH*nFloors+0.25-BUILDING_FLOOR_HIGH/2.0,0.0]);
-      roofType1();
+    multTranslation([
+      0.0,
+      BUILDING_FLOOR_HIGH * nFloors + 0.25 - BUILDING_FLOOR_HIGH / 2.0,
+      0.0,
+    ]);
+    selectColor(vec3(38.0, 20.0, 71.0));
+    roofType1();
     popMatrix();
   }
 
@@ -988,10 +1016,20 @@ function setup(shaders) {
     }
   }
 
-  function hideCrate() {
-    cratePosX = INIT_CRATE_POS_X;
-    cratePosY = INIT_CRATE_POS_Y;
-    cratePosZ = INIT_CRATE_POS_Z;
+  function moveCrate(crate) {
+    let newY = crate.posY -
+      GRAVITY * GRAVITY * speed / 2;
+    let newX = crate.posX +  Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * crate.speed;
+    let newZ = crate.posZ + Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * crate.speed;
+    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2, crate.posZ)) {
+      crate.posY = newY
+      crate.posX = newX;
+    } else {
+      crate.posY = CRATE_SIZE / 2;
+    }
+    if (time - crate.startTime > CRATE_DESPAWN_TIME) {
+      crateInstances.splice(crateInstances.indexOf(crate), 1);
+    }
   }
 
   function render() {
@@ -1025,15 +1063,6 @@ function setup(shaders) {
     if (hasToRestart) {
       restartHelicopter();
       hasToRestart = false;
-    }
-
-    for (let crate of crateInstances) {
-      if (isWithinWorldLimit(crate.posX, crate.posY, crate.posZ)) {
-        crate.posY = crate.posY - crateFallSpeed * speed;
-      }
-      if (time - crate.startTime > CRATE_DESPAWN_TIME) {
-        crateInstances.splice(crateInstances.indexOf(crate), 1);
-      }
     }
 
     //Hide crate after CRATE_DESPAWN_TIME seconds
