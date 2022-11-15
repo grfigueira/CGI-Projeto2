@@ -798,6 +798,24 @@ function setup(shaders) {
       popMatrix();
     }
   }
+  function roofType1(){
+    pushMatrix();
+      roofPartType1();
+    popMatrix();
+    pushMatrix();
+      multTranslation([0,0.7/2.0,0]);
+      multScale([0.9,1.0,0.9]);
+      roofPartType1();
+    popMatrix();
+  }
+
+  function roofPartType1(){
+    multScale([BUILDING_T2_LEN+1.5, 0.7, BUILDING_T2_LEN+1.5]);
+
+    uploadModelView();
+
+    CUBE.draw(gl, program, mode);
+  }
 
   function windowSide() {
     multScale([5.0, 0.5, 0.3]);
@@ -871,6 +889,10 @@ function setup(shaders) {
       }
       popMatrix();
     }
+    pushMatrix();
+      multTranslation([0.0,BUILDING_FLOOR_HIGH*nFloors+0.25-BUILDING_FLOOR_HIGH/2.0,0.0]);
+      roofType1();
+    popMatrix();
   }
 
   function helicopterStillAnimation() {
