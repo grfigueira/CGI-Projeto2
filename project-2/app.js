@@ -397,6 +397,7 @@ function setup(shaders) {
     seedGenerated = [];
     for(let i = 0; i<N_BUILDINGS;i++){
     seedGenerated.push({
+      nFloors: Math.floor(Math.random()* 5.0 + 3.0),
       floorColor: Math.floor(Math.random() * BUILDING_FLOOR_BASE_COLORS.length),
       columnColor: Math.floor(Math.random() * COLUMN_COLORS.length),
       wallColor: Math.floor(Math.random() * WALL_COLORS.length),
@@ -696,43 +697,43 @@ function setup(shaders) {
     pushMatrix();
     multTranslation([-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
     currSeed = seedGenerated[currBuilding];
-    buildingType1(8,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0]);
-    buildingType1(3,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0]);
-    buildingType1(5,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0]);
-    buildingType1(6,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    buildingType1(4,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0]);
-    buildingType1(6,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     popMatrix();
     pushMatrix();
     currSeed = seedGenerated[currBuilding];
     multTranslation([-70.0, BUILDING_FLOOR_HIGH / 2.0, 60.0]);
-    buildingType1(3,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor]  ,ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor]  ,ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     popMatrix();
     currBuilding=0;
   }
