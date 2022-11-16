@@ -1121,11 +1121,12 @@ function setup(shaders) {
   function moveCrate(crate) {
     let newY = crate.posY -
       GRAVITY * GRAVITY * speed / 2;
-    let newX = crate.posX +  Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * crate.speed;
-    let newZ = crate.posZ + Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * crate.speed;
-    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2, crate.posZ)) {
-      crate.posY = newY
+    let newX = crate.posX +  Math.sin(crate.angle) * crate.speed / 20.0;
+    let newZ = crate.posZ + Math.cos(crate.angle) * crate.speed / 20.0;
+    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2, crate.posZ) && crate.posY != CRATE_SIZE / 2) {
+      crate.posY = newY;
       crate.posX = newX;
+      crate.posZ = newZ;
     } else {
       crate.posY = CRATE_SIZE / 2;
     }
