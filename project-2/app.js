@@ -150,10 +150,10 @@ let seedGenerated = [];
 
 //Colors
 
-let BUILDING_FLOOR_BASE_COLORS = [vec3(217.0,180.0,110.0),vec3(236.0,177.0,97.0),vec3(116.0,130.0,139.0)];
-let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.0,99.0)];
-let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0)];
-let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0)];
+let BUILDING_FLOOR_BASE_COLORS = [vec3(217.0,180.0,110.0),vec3(236.0,177.0,97.0),vec3(116.0,130.0,139.0),vec3(38.0,28.0,32.0),vec3(104.0,78.0,55.0)];
+let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.0,99.0),vec3(0.0,0.0,0.0),vec3(69.0,84.0,89.0)];
+let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0),vec3(138.0,109.0,104.0),vec3(107.0,30.0,10.0)];
+let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0),vec3(178.0,154.0,132.0),vec3(16.0,73.0,54.0)];
 
 
 const GRASS_COLOR = vec3(100.0,139.0,20.0);
@@ -943,13 +943,6 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
-  function windowSide() {
-    multScale([5.0, 0.5, 0.3]);
-
-    uploadModelView();
-
-    CUBE.draw(gl, program, mode);
-  }
 
   function windowGlass(){
     selectColor(WINDOW_GLASS_COLOR);
@@ -1011,9 +1004,8 @@ function setup(shaders) {
       helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
     ) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
-    }
+      multRotationZ(WIND_RESISTANCE/10.0 * Math.sin(time * Math.PI));}
     multTranslation([0, helicopterHigh, 0]);
-    multRotationZ(0.7 * Math.sin(time * Math.PI));
   }
 
   function helicopterFlight() {
