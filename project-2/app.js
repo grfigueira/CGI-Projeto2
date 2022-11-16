@@ -138,26 +138,21 @@ const ROOF_SIZE = BASE_SIZE;
 const BUILDING_T2_LEN = 22.0;
 const BUILDING_FLOOR_HIGH = 9.0;
 
+const WINDOW_HIGH =7.0;
+const WINDOW_LEN =5.0;
+
+const N_BUILDINGS = 7.0;
+let currBuilding = 0;
+
+let seedGenerated = [];
+
 //Colors
-const WINDOW_COLOR_T1 = vec3(112.0,65.0,50.0);
-const WINDOW_COLOR_T2 = vec3(193.0,155.0,108.0);
-const WINDOW_COLOR_T3 = vec3(252.0, 252.0,240.0);
 
-const BUILDING_FLOOR_BASE_COLOR_T1 = vec3(217.0,180.0,110.0);
-const BUILDING_FLOOR_BASE_COLOR_T2 = vec3(236.0,177.0,97.0);
-const BUILDING_FLOOR_BASE_COLOR_T3 = vec3(116.0,130.0,139.0);
+let BUILDING_FLOOR_BASE_COLORS = [vec3(217.0,180.0,110.0),vec3(236.0,177.0,97.0),vec3(116.0,130.0,139.0)];
+let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.0,99.0)];
+let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0)];
+let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0)];
 
-const COLUMN_COLOR_T1 = vec3(115.0,97.0,83.0);
-const COLUMN_COLOR_T2 = vec3(187.0,195.0,212.0);
-const COLUMN_COLOR_T3 = vec3(86.0,80.0,99.0);
-
-const WALL_COLOR_T1 = vec3(221.0,212.0,179.0);
-const WALL_COLOR_T2 = vec3(236.0,181.0,101.0);
-const WALL_COLOR_T3 = vec3(54.0,101.0,119.0);
-
-const ROOF_COLOR_T1 = vec3(153.0,134.0,121.0);
-const ROOF_COLOR_T2 = vec3(248.0,155.0,115.0);
-const ROOF_COLOR_T3 = vec3(89.0,159.0,161.0);
 
 const GRASS_COLOR = vec3(100.0,139.0,20.0);
 
@@ -176,6 +171,7 @@ const XYview = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]); //olhar do z p
 let view = axonotricView;
 
 function setup(shaders) {
+  generateSeeds();
   let canvas = document.getElementById("gl-canvas");
   let aspect = canvas.width / canvas.height;
 
@@ -287,7 +283,9 @@ function setup(shaders) {
           heliceSpeed += 70;
           heliceShowSpeed += 70;
         } else {
-          heliceSpeed += 15.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
+          heliceSpeed += 20.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
+          if(heliceShowSpeed<2*HELICE_FLYING_SPEED){
+          heliceShowSpeed += 5.0;}
         }
         break;
       case "ArrowDown":
@@ -328,6 +326,9 @@ function setup(shaders) {
         break;
       case " ":
         spawnCrate();
+        break;
+      case "m":
+        generateSeeds();
         break;
     }
     mProjection = ortho(
@@ -390,6 +391,19 @@ function setup(shaders) {
     let isWithinY = y <= WORLD_Y_UPPER_LIMIT && y >= WORLD_Y_LOWER_LIMIT;
     let isWithinZ = z <= WORLD_Z_UPPER_LIMIT && z >= WORLD_Z_LOWER_LIMIT;
     return isWithinX && isWithinY && isWithinZ;
+  }
+
+  function generateSeeds(){
+    seedGenerated = [];
+    for(let i = 0; i<N_BUILDINGS;i++){
+    seedGenerated.push({
+      floorColor: Math.floor(Math.random() * BUILDING_FLOOR_BASE_COLORS.length),
+      columnColor: Math.floor(Math.random() * COLUMN_COLORS.length),
+      wallColor: Math.floor(Math.random() * WALL_COLORS.length),
+      roofColor: Math.floor(Math.random() * ROOF_COLORS.length),
+
+    });}
+
   }
 
   function spawnCrate() {
@@ -678,34 +692,49 @@ function setup(shaders) {
     building();
     popMatrix();
     //buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor)
+    let currSeed = -1;
     pushMatrix();
     multTranslation([-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    buildingType1(7,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T1,ROOF_COLOR_T1,WALL_COLOR_T3,COLUMN_COLOR_T1);
+    currSeed = seedGenerated[currBuilding];
+    buildingType1(8,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0]);
-    buildingType1(2,BUILDING_FLOOR_BASE_COLOR_T2,WINDOW_COLOR_T2,ROOF_COLOR_T2,WALL_COLOR_T2,COLUMN_COLOR_T2);
+    buildingType1(3,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0]);
-    buildingType1(4,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T3,ROOF_COLOR_T3,WALL_COLOR_T3,COLUMN_COLOR_T3);
+    buildingType1(5,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0]);
-    buildingType1(5,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T2,ROOF_COLOR_T2,WALL_COLOR_T2,COLUMN_COLOR_T3);
+    buildingType1(6,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    buildingType1(3,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T2,ROOF_COLOR_T1,WALL_COLOR_T1,COLUMN_COLOR_T1);
+    buildingType1(4,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0]);
-    buildingType1(5,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T3,ROOF_COLOR_T2,WALL_COLOR_T1,COLUMN_COLOR_T2);
+    buildingType1(6,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
+    currBuilding++;
     popMatrix();
     pushMatrix();
+    currSeed = seedGenerated[currBuilding];
     multTranslation([-70.0, BUILDING_FLOOR_HIGH / 2.0, 60.0]);
-    buildingType1(2,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T1,ROOF_COLOR_T2,WALL_COLOR_T3,COLUMN_COLOR_T2);
+    buildingType1(3,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor]  ,ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     popMatrix();
+    currBuilding=0;
   }
 
   function base() {
@@ -811,28 +840,29 @@ function setup(shaders) {
     }
   }
 
-  function windowConstructType1(windowColor) {
+  function windowConstructType1() {
     for (let i = 0; i < 3; i++) {
       pushMatrix();
-      multTranslation([i * BUILDING_T2_LEN / 3, 0.0, BUILDING_T2_LEN / 2.0]);
-      multScale([0.4, 0.4, 0.4]);
-      windowCompleteType1(windowColor);
+      multTranslation([i * BUILDING_T2_LEN / 3.0 + WINDOW_LEN/6.0, 0.0, BUILDING_T2_LEN / 2.0]);
+      multScale([0.7, 0.7, 0.7]);
+      windowGlass();
+      //windowCompleteType1(windowColor);
       popMatrix();
     }
   }
 
-  function windowConstructType2(windowColor) {
+  function windowConstructType2() {
     for (let i = 0; i < 2; i++) {
       pushMatrix();
-      multTranslation([i * BUILDING_T2_LEN / 2, 0.0, BUILDING_T2_LEN / 2.0]);
-      multScale([0.4, 0.4, 0.4]);
-      windowCompleteType2(windowColor);
+      multTranslation([i * BUILDING_T2_LEN / 2.0 +WINDOW_LEN/4.0, 0.0, BUILDING_T2_LEN / 2.0]);
+      multScale([0.7, 0.7, 0.7]);
+      windowCompleteType2();
       popMatrix();
     }
   }
 
 
-  function completeFloorType1(floorColor,windowColor,columnColor) {
+  function completeFloorType1(floorColor,columnColor) {
     pushMatrix();
     buildingFloorType1(floorColor,columnColor);
     popMatrix();
@@ -840,11 +870,11 @@ function setup(shaders) {
       pushMatrix();
       multRotationY(i);
       multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
-      windowConstructType1(windowColor);
+      windowConstructType1();
       popMatrix();
     }
   }
-  function completeFloorType2(floorColor,windowColor,columnColor) {
+  function completeFloorType2(floorColor,columnColor) {
     pushMatrix();
     buildingFloorType1(floorColor,columnColor);
     popMatrix();
@@ -852,12 +882,12 @@ function setup(shaders) {
       pushMatrix();
       multRotationY(i);
       multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
-      windowConstructType2(windowColor);
+      windowConstructType2();
       popMatrix();
     }
   }
 
-  function completeFloorType3(floorColor,windowColor,wallColor,columnColor) {
+  function completeFloorType3(floorColor,wallColor,columnColor) {
     pushMatrix();
     buildingFloorType2(floorColor,wallColor,columnColor);
     popMatrix();
@@ -865,7 +895,7 @@ function setup(shaders) {
       pushMatrix();
       multRotationY(i);
       multTranslation([-(BUILDING_T2_LEN / 2.0 - 2.5), 0.0, 0.0]);
-      windowConstructType1(windowColor);
+      windowConstructType1();
       popMatrix();
     }
   }
@@ -897,15 +927,15 @@ function setup(shaders) {
 
     CUBE.draw(gl, program, mode);
   }
-
+/*
 
   function windowCompleteType1(windowColor) {
     selectColor(windowColor);
-    /*
+    
     pushMatrix();
     windowSide();
     popMatrix();
-    */
+    
     pushMatrix();
     multTranslation([2.5, 0.0, 0.0]);
     multRotationZ(90);
@@ -930,22 +960,25 @@ function setup(shaders) {
     windowGlass();
     popMatrix();
   }
+  */
   function windowGlass(){
     selectColor(WINDOW_GLASS_COLOR);
-    multScale([5.0,5.0*1.5,0.1]);
+    multScale([WINDOW_LEN,WINDOW_HIGH,0.1]);
 
     uploadModelView();
 
     CUBE.draw(gl,program,mode);
   }
 
-  function windowCompleteType2(windowColor) {
+  function windowCompleteType2() {
     pushMatrix();
-    windowCompleteType1(windowColor);
+    windowGlass();
+    //windowCompleteType1(windowColor);
     popMatrix();
     pushMatrix();
     multTranslation([5 + 0.5, 0.0, 0.0]);
-    windowCompleteType1(windowColor);
+    windowGlass();
+    //windowCompleteType1(windowColor);
     popMatrix();
   }
 
@@ -962,26 +995,22 @@ function setup(shaders) {
     popMatrix();
   }*/
 
-  function buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor) {
+  function buildingType1(nFloors,floorColor,roofColor,wallColor,columnColor) {
     for (let i = 0; i < nFloors; i++) {
       pushMatrix();
       //selectColor(vec3(255.0, 56.0, 100.0));
       multTranslation([0.0, BUILDING_FLOOR_HIGH * i, 0.0]);
       if (i % 4 == 0) {
         selectColor(vec3(38.0, 20.0, 71.0));
-        completeFloorType3(floorColor,windowColor,wallColor,columnColor);
+        completeFloorType3(floorColor,wallColor,columnColor);
       } else {
         if (i % 3 == 0) {
           //selectColor(vec3(255.0, 56.0, 100.0));
-          completeFloorType2(floorColor,windowColor,columnColor);
+          completeFloorType2(floorColor,columnColor);
         } else {
-          if(i % 2 == 0){
           //selectColor(vec3(255.0, 56.0, 100.0));
-          completeFloorType1(floorColor,windowColor,columnColor);}
-          else{
-            buildingFloorType1(floorColor,columnColor);
-          }
-        }
+          completeFloorType1(floorColor,columnColor);}
+
       }
       popMatrix();
     }
