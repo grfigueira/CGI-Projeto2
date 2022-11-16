@@ -1106,6 +1106,7 @@ function setup(shaders) {
     ) {
       helicopterPosZ += toAddZ;
     }
+
     let toAddX = helicopterSpeed * speed *
       Math.sin(helicopterAngleY * Math.PI / 180);
     if (
@@ -1122,8 +1123,8 @@ function setup(shaders) {
   function moveCrate(crate) {
     let newY = crate.posY -
       GRAVITY * GRAVITY * speed / 2;
-    let newX = crate.posX +  Math.sin(crate.angle) * crate.speed / 20.0;
-    let newZ = crate.posZ + Math.cos(crate.angle) * crate.speed / 20.0;
+    let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
+    let newZ = crate.posZ + Math.cos(crate.angle * Math.PI / 180) * crate.speed * speed;
     if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2, crate.posZ) && crate.posY != CRATE_SIZE / 2) {
       crate.posY = newY;
       crate.posX = newX;
