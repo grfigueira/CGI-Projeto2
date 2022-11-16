@@ -124,6 +124,8 @@ const FEET_Z = BODY_SIZE_Z;
 const CENTER_SPHERE_SIZE = 2.0;
 
 //Buildings
+let buildingsInstances = [];
+
 //type1
 const BASE_HEIGHT = 2.0;
 const BASE_SIZE = 9.0;
@@ -252,14 +254,14 @@ function setup(shaders) {
         }
         break;
       case "r":
-        if (helicopterPosY != 0.0 && !isAutomaticAnimation) {
+        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
           if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
             helicopterSpeed++;
           }
         }
         break;
       case "g":
-        if (helicopterPosY != 0.0 && !isAutomaticAnimation) {
+        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
           helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
           if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
             helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
@@ -269,7 +271,7 @@ function setup(shaders) {
         break;
 
       case "d":
-        if (helicopterPosY != 0.0 && !isAutomaticAnimation) {
+        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
           helicopterAngleY -= HELICOPTER_ANGLE_CHANGE;
           if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
             helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
@@ -289,6 +291,7 @@ function setup(shaders) {
         }
         break;
       case "ArrowDown":
+        let floorLevel = getFloor(helicopterPosX,helicopterPosZ);
         let toRemove = speed * (helicopterPosY - WORLD_X_LOWER_LIMIT) / 10.0;
         if (
           isWithinWorldLimit(
@@ -299,13 +302,13 @@ function setup(shaders) {
         ) {
           helicopterPosY -= toRemove;
         } else {
-          helicopterPosY = WORLD_Y_LOWER_LIMIT;
+          helicopterPosY = floorLevel;
         }
         break;
       case "ArrowLeft":
         //Utiliza a força centrifuga para calcular velocidade
         if (
-          isAutomaticAnimation && helicopterPosY != 0.0 &&
+          isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
           helicopterSpeed < HELICOPTER_MAX_SPEED
         ) {
           //helicopterSpeed ++;
@@ -386,14 +389,31 @@ function setup(shaders) {
     heliceShowSpeed = 0;
   }
 
+  function getFloor(x,z){
+    let ret = 0.0;
+    //let crateObj of crateInstances
+    for (let buildingObj of buildingsInstances){
+      let isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
+      let isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
+      console.log("X: " +isXInside);
+      console.log("Z: " +isZInside);
+        if(isXInside && isZInside){
+          ret = Math.max(ret,buildingObj.varY);
+        }
+    }
+    console.log("Get floor output " + ret);
+    return ret;
+  }
+
   function isWithinWorldLimit(x, y, z) {
     let isWithinX = x <= WORLD_X_UPPER_LIMIT && x >= WORLD_X_LOWER_LIMIT;
-    let isWithinY = y <= WORLD_Y_UPPER_LIMIT && y >= WORLD_Y_LOWER_LIMIT;
+    let isWithinY = y <= WORLD_Y_UPPER_LIMIT && y >= getFloor(x,z);
     let isWithinZ = z <= WORLD_Z_UPPER_LIMIT && z >= WORLD_Z_LOWER_LIMIT;
     return isWithinX && isWithinY && isWithinZ;
   }
 
   function generateSeeds(){
+    restartHelicopter();
     seedGenerated = [];
     for(let i = 0; i<N_BUILDINGS;i++){
     seedGenerated.push({
@@ -404,6 +424,18 @@ function setup(shaders) {
       roofColor: Math.floor(Math.random() * ROOF_COLORS.length),
 
     });}
+
+  }
+
+  function addBuildingInstance(posXB,posYB,posZB,varXB,varYB,varZB){
+    buildingsInstances.push({
+      posX: posXB,
+      posY: posYB,
+      posZ: posZB,
+      varX: varXB,
+      varY: varYB,
+      varZ: varZB,
+  });
 
   }
 
@@ -670,6 +702,34 @@ function setup(shaders) {
     floor(GRASS_COLOR);
     popMatrix();
     pushMatrix();
+    multTranslation([-20.0, 0.0, -20.0]);
+    building();
+    popMatrix();
+    //buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor)
+    pushMatrix();
+      addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
+    popMatrix();
+    pushMatrix();
+      addBuilding(-70.0,BUILDING_FLOOR_HIGH/2.0,60.0);
+    popMatrix();
+    currBuilding=0;
+
+    pushMatrix();
     multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
     helicopterStillAnimation();
     helicopterFlight();
@@ -688,54 +748,16 @@ function setup(shaders) {
       crate(crateObj.posX, crateObj.posY, crateObj.posZ);
       popMatrix();
     }
-    pushMatrix();
-    multTranslation([-20.0, 0.0, -20.0]);
-    building();
-    popMatrix();
-    //buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor)
-    let currSeed = -1;
-    pushMatrix();
-    multTranslation([-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    currSeed = seedGenerated[currBuilding];
+  }
+
+  function addBuilding(x,y,z){
+    let currSeed = seedGenerated[currBuilding];
+    multTranslation([x,y,z]);
     buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    currBuilding++;
-    popMatrix();
-    pushMatrix();
-    currSeed = seedGenerated[currBuilding];
-    multTranslation([-70.0, BUILDING_FLOOR_HIGH / 2.0, 60.0]);
-    buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor]  ,ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
-    popMatrix();
-    currBuilding=0;
+    addBuildingInstance(x,y,z,BUILDING_T2_LEN+1.5,currSeed.nFloors*BUILDING_FLOOR_HIGH+1.7,BUILDING_T2_LEN+1.5);
+    console.log("nInstances = " + buildingsInstances.length);
+    
   }
 
   function base() {
@@ -928,40 +950,7 @@ function setup(shaders) {
 
     CUBE.draw(gl, program, mode);
   }
-/*
 
-  function windowCompleteType1(windowColor) {
-    selectColor(windowColor);
-    
-    pushMatrix();
-    windowSide();
-    popMatrix();
-    
-    pushMatrix();
-    multTranslation([2.5, 0.0, 0.0]);
-    multRotationZ(90);
-    multScale([1.5, 1.0, 1.0]);
-    windowSide();
-    popMatrix();
-    pushMatrix();
-    multTranslation([-2.5, 0.0, 0.0]);
-    multRotationZ(90);
-    multScale([1.5, 1.0, 1.0]);
-    windowSide();
-    popMatrix();
-    pushMatrix();
-    multTranslation([0.0, 2.5 * 1.5 - 0.5 / 2.0, 0.0]);
-    windowSide();
-    popMatrix();
-    pushMatrix();
-    multTranslation([0.0, -(2.5 * 1.5 - 0.5 / 2.0), 0.0]);
-    windowSide();
-    popMatrix();
-    pushMatrix();
-    windowGlass();
-    popMatrix();
-  }
-  */
   function windowGlass(){
     selectColor(WINDOW_GLASS_COLOR);
     multScale([WINDOW_LEN,WINDOW_HIGH,0.1]);
@@ -983,18 +972,6 @@ function setup(shaders) {
     popMatrix();
   }
 
-  //ESTA FUNCAO É UTILIZADA APENAS PARA TESTAR FIGURAS
-  /*
-  function testConstruct(){
-    pushMatrix();
-      multTranslation([0.0, -1.0, 0.0]);
-      floor();
-    popMatrix();
-    pushMatrix();
-      multTranslation([0.0,BUILDING_FLOOR_HIGH/2.0,0.0]);
-      buildingType1(10);
-    popMatrix();
-  }*/
 
   function buildingType1(nFloors,floorColor,roofColor,wallColor,columnColor) {
     for (let i = 0; i < nFloors; i++) {
@@ -1031,7 +1008,7 @@ function setup(shaders) {
       (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
     if (
       isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
-      helicopterPosY != WORLD_Y_LOWER_LIMIT
+      helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
     ) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
     }
@@ -1063,7 +1040,7 @@ function setup(shaders) {
   }
 
   function helicopterSpeedCalcule() {
-    if (helicopterPosY <= 0.0 && 0 < heliceSpeed) {
+    if (helicopterPosY <= getFloor(helicopterPosX,helicopterPosZ) && 0 < heliceSpeed) {
       heliceSpeed -= heliceSpeed / 100.0;
       heliceShowSpeed -= heliceShowSpeed / 70.0;
       if (heliceSpeed < 0.03) {
@@ -1125,12 +1102,13 @@ function setup(shaders) {
       GRAVITY * GRAVITY * speed / 2;
     let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
     let newZ = crate.posZ + Math.cos(crate.angle * Math.PI / 180) * crate.speed * speed;
-    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2, crate.posZ) && crate.posY != CRATE_SIZE / 2) {
+    let floor = getFloor(newX,newZ);
+    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2.0, crate.posZ) && crate.posY > CRATE_SIZE / 2.0 + floor) {
       crate.posY = newY;
       crate.posX = newX;
       crate.posZ = newZ;
     } else {
-      crate.posY = CRATE_SIZE / 2;
+      crate.posY = CRATE_SIZE / 2.0 + floor;
     }
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
@@ -1176,6 +1154,7 @@ function setup(shaders) {
     //}
     loadMatrix(view);
     //testConstruct();
+    buildingsInstances = [];
     world();
   }
 }
