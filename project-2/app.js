@@ -84,7 +84,7 @@ const HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
 //All helices
 let heliceSpeed = 0;
 let heliceShowSpeed = 0;
-const HELICE_FLYING_SPEED = 1000;
+const HELICE_FLYING_SPEED = 1300;
 const HELICE_NUM = 3;
 
 //Helice connector
@@ -136,7 +136,7 @@ const ROOF_SIZE = BASE_SIZE;
 
 //type2
 const BUILDING_T2_LEN = 22.0;
-const BUILDING_FLOOR_HIGH = 5.0;
+const BUILDING_FLOOR_HIGH = 9.0;
 
 //Colors
 const WINDOW_COLOR_T1 = vec3(112.0,65.0,50.0);
@@ -151,13 +151,15 @@ const COLUMN_COLOR_T1 = vec3(115.0,97.0,83.0);
 const COLUMN_COLOR_T2 = vec3(187.0,195.0,212.0);
 const COLUMN_COLOR_T3 = vec3(86.0,80.0,99.0);
 
-const WALL_COLOR_T1 = vec3(41.0,70.0,88.0);
-const WALL_COLOR_T2 = vec3(255.0,184.0,120.0);
+const WALL_COLOR_T1 = vec3(221.0,212.0,179.0);
+const WALL_COLOR_T2 = vec3(236.0,181.0,101.0);
 const WALL_COLOR_T3 = vec3(54.0,101.0,119.0);
 
 const ROOF_COLOR_T1 = vec3(153.0,134.0,121.0);
 const ROOF_COLOR_T2 = vec3(248.0,155.0,115.0);
 const ROOF_COLOR_T3 = vec3(89.0,159.0,161.0);
+
+const GRASS_COLOR = vec3(100.0,139.0,20.0);
 
 const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
 
@@ -282,8 +284,8 @@ function setup(shaders) {
 
       case "ArrowUp":
         if (heliceSpeed < HELICE_FLYING_SPEED) {
-          heliceSpeed += 50;
-          heliceShowSpeed += 50;
+          heliceSpeed += 70;
+          heliceShowSpeed += 70;
         } else {
           heliceSpeed += 15.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
         }
@@ -620,9 +622,10 @@ function setup(shaders) {
   /*
   Desenha o chão
   */
-  function floor() {
+  function floor(floorColor) {
+    selectColor(floorColor);
     multScale([WORLD_X_UPPER_LIMIT * 2.0, 1.0, WORLD_Z_UPPER_LIMIT * 2.0]);
-    selectColor(vec3(192.0, 189.0, 165.0));
+    //selectColor(vec3(192.0, 189.0, 165.0));
     uploadModelView();
     CUBE.draw(gl, program, mode);
   }
@@ -649,7 +652,7 @@ function setup(shaders) {
   function world() {
     pushMatrix();
     multTranslation([0.0, -1.0, 0.0]);
-    floor();
+    floor(GRASS_COLOR);
     popMatrix();
     pushMatrix();
     multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
@@ -677,19 +680,31 @@ function setup(shaders) {
     //buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor)
     pushMatrix();
     multTranslation([-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
-    buildingType1(15,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T1,ROOF_COLOR_T1,WINDOW_COLOR_T1,COLUMN_COLOR_T1);
+    buildingType1(7,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T1,ROOF_COLOR_T1,WALL_COLOR_T3,COLUMN_COLOR_T1);
     popMatrix();
     pushMatrix();
-    multTranslation([-84.0, BUILDING_FLOOR_HIGH / 2.0, -57.0]);
-    buildingType1(5,BUILDING_FLOOR_BASE_COLOR_T2,WINDOW_COLOR_T2,ROOF_COLOR_T2,WINDOW_COLOR_T2,COLUMN_COLOR_T2);
+    multTranslation([-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0]);
+    buildingType1(2,BUILDING_FLOOR_BASE_COLOR_T2,WINDOW_COLOR_T2,ROOF_COLOR_T2,WALL_COLOR_T2,COLUMN_COLOR_T2);
     popMatrix();
     pushMatrix();
-    multTranslation([-78.0, BUILDING_FLOOR_HIGH / 2.0, -30.0]);
-    buildingType1(11,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T3,ROOF_COLOR_T3,WINDOW_COLOR_T3,COLUMN_COLOR_T3);
+    multTranslation([-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0]);
+    buildingType1(4,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T3,ROOF_COLOR_T3,WALL_COLOR_T3,COLUMN_COLOR_T3);
     popMatrix();
     pushMatrix();
     multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0]);
-    buildingType1(12,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T2,ROOF_COLOR_T2,WINDOW_COLOR_T1,COLUMN_COLOR_T3);
+    buildingType1(5,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T2,ROOF_COLOR_T2,WALL_COLOR_T2,COLUMN_COLOR_T3);
+    popMatrix();
+    pushMatrix();
+    multTranslation([10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0]);
+    buildingType1(3,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T2,ROOF_COLOR_T1,WALL_COLOR_T1,COLUMN_COLOR_T1);
+    popMatrix();
+    pushMatrix();
+    multTranslation([-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0]);
+    buildingType1(5,BUILDING_FLOOR_BASE_COLOR_T1,WINDOW_COLOR_T3,ROOF_COLOR_T2,WALL_COLOR_T1,COLUMN_COLOR_T2);
+    popMatrix();
+    pushMatrix();
+    multTranslation([-70.0, BUILDING_FLOOR_HIGH / 2.0, 60.0]);
+    buildingType1(2,BUILDING_FLOOR_BASE_COLOR_T3,WINDOW_COLOR_T1,ROOF_COLOR_T2,WALL_COLOR_T3,COLUMN_COLOR_T2);
     popMatrix();
   }
 
@@ -797,9 +812,9 @@ function setup(shaders) {
   }
 
   function windowConstructType1(windowColor) {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       pushMatrix();
-      multTranslation([i * BUILDING_T2_LEN / 5, 0.0, BUILDING_T2_LEN / 2.0]);
+      multTranslation([i * BUILDING_T2_LEN / 3, 0.0, BUILDING_T2_LEN / 2.0]);
       multScale([0.4, 0.4, 0.4]);
       windowCompleteType1(windowColor);
       popMatrix();
@@ -807,9 +822,9 @@ function setup(shaders) {
   }
 
   function windowConstructType2(windowColor) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       pushMatrix();
-      multTranslation([i * BUILDING_T2_LEN / 3, 0.0, BUILDING_T2_LEN / 2.0]);
+      multTranslation([i * BUILDING_T2_LEN / 2, 0.0, BUILDING_T2_LEN / 2.0]);
       multScale([0.4, 0.4, 0.4]);
       windowCompleteType2(windowColor);
       popMatrix();
@@ -883,11 +898,14 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
+
   function windowCompleteType1(windowColor) {
     selectColor(windowColor);
+    /*
     pushMatrix();
     windowSide();
     popMatrix();
+    */
     pushMatrix();
     multTranslation([2.5, 0.0, 0.0]);
     multRotationZ(90);
@@ -953,12 +971,16 @@ function setup(shaders) {
         selectColor(vec3(38.0, 20.0, 71.0));
         completeFloorType3(floorColor,windowColor,wallColor,columnColor);
       } else {
-        if (i % 3 == 0 || i % 2 == 0) {
+        if (i % 3 == 0) {
           //selectColor(vec3(255.0, 56.0, 100.0));
-          completeFloorType2(floorColor,windowColor,wallColor);
+          completeFloorType2(floorColor,windowColor,columnColor);
         } else {
+          if(i % 2 == 0){
           //selectColor(vec3(255.0, 56.0, 100.0));
-          completeFloorType1(floorColor,windowColor,columnColor);
+          completeFloorType1(floorColor,windowColor,columnColor);}
+          else{
+            buildingFloorType1(floorColor,columnColor);
+          }
         }
       }
       popMatrix();
@@ -1013,7 +1035,7 @@ function setup(shaders) {
   function helicopterSpeedCalcule() {
     if (helicopterPosY <= 0.0 && 0 < heliceSpeed) {
       heliceSpeed -= heliceSpeed / 100.0;
-      heliceShowSpeed -= heliceShowSpeed / 100.0;
+      heliceShowSpeed -= heliceShowSpeed / 70.0;
       if (heliceSpeed < 0.03) {
         heliceShowSpeed = 0;
         heliceSpeed = 0;

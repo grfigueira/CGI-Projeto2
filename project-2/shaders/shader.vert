@@ -11,7 +11,7 @@ varying vec3 fColor;
 
 float toAdd = 0.0;
 
-const float VAR_SCALE = 1.0/3.0;
+const float VAR_SCALE = 1.0/5.0;
 
 
 // generates a pseudo random number that is a function of the argument. The argument needs to be constantly changing from call to call to generate different results
