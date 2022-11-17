@@ -93,7 +93,7 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-const GRAVITY = 15.0; // m/s^2
+const GRAVITY = 18.0; // m/s^2
 const WIND_RESISTANCE = 10.0; // m/s^2
 
 //Helicopter movement
@@ -104,7 +104,7 @@ const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 
 const HELICOPTER_INIT_Y = 0.0;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_MAX_SPEED = 30;
-const HELICOPTER_ANGLE_CHANGE = 10;
+const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
@@ -187,17 +187,17 @@ let seedGenerated = [];
 
 //Colors
 
-let BUILDING_FLOOR_BASE_COLORS = [vec3(217.0,180.0,110.0),vec3(236.0,177.0,97.0),vec3(116.0,130.0,139.0)];
-let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.0,99.0)];
-let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0)];
-let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0)];
+let BUILDING_FLOOR_BASE_COLORS = [vec3(217.0,180.0,110.0),vec3(236.0,177.0,97.0),vec3(116.0,130.0,139.0),vec3(38.0,28.0,32.0),vec3(104.0,78.0,55.0)];
+let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.0,99.0),vec3(0.0,0.0,0.0),vec3(69.0,84.0,89.0)];
+let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0),vec3(138.0,109.0,104.0),vec3(107.0,30.0,10.0)];
+let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0),vec3(178.0,154.0,132.0),vec3(16.0,73.0,54.0)];
 
 
 const GRASS_COLOR = vec3(100.0,139.0,20.0);
 
 const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
 
-//const XZview = lookAt([10, VP_DISTANCE, 0-10], [0, 0, 0], [0, 0, 1]); //olhar de lado
+
 const axonotricView = lookAt(
   [VP_DISTANCE, VP_DISTANCE, VP_DISTANCE],
   [0, 0, 0],
@@ -303,7 +303,7 @@ function setup(shaders) {
           }
         }
         break;
-      case "g":
+      case "d":
         if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
           helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
           if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
@@ -313,7 +313,7 @@ function setup(shaders) {
         }
         break;
 
-      case "d":
+      case "g":
         if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
           helicopterAngleY -= HELICOPTER_ANGLE_CHANGE;
           if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
@@ -349,12 +349,10 @@ function setup(shaders) {
         }
         break;
       case "ArrowLeft":
-        //Utiliza a força centrifuga para calcular velocidade
         if (
           isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
           helicopterSpeed < HELICOPTER_MAX_SPEED
         ) {
-          //helicopterSpeed ++;
           helicopterSpeed += speed * speed * (HELICOPTER_ANGLE_CHANGE) *
             (HELICOPTER_ANGLE_CHANGE) * AUTOMATIC_ANIMATION_RADIUS;
         }
@@ -437,47 +435,16 @@ function setup(shaders) {
   }
 
   function updateOrtho(){
-    //minX,maxX,minY,maxY,minZ,maxZ
-    //view do helicoptero
-    //130 graus de visao no y
-    //200 no x e z
-    let left =  (helicopterPosX-VP_DISTANCE*Math.cos((helicopterAngleY-180.0/2.0)*Math.PI/180.0))
-    let right = (helicopterPosX+VP_DISTANCE*Math.cos((helicopterAngleY+180.0/2.0)*Math.PI/180.0))
-    let botom = (helicopterPosY+VP_DISTANCE*Math.sin((-90.0/2.0)*Math.PI/180.0))
-    let top =   (helicopterPosY+VP_DISTANCE*Math.sin((90.0/2.0)*Math.PI/180.0))
-    let near =  (helicopterPosZ-VP_DISTANCE*Math.sin((helicopterAngleY-180.0/2.0)*Math.PI/180.0));
-    let far =   (helicopterPosZ+VP_DISTANCE*Math.sin((helicopterAngleY+180.0/2.0)*Math.PI/180.0));
-/*
-    if(right == left){
-      left = helicopterAngleY;
-    }
-    if(near == far){
-      near = helicopterAngleY;
-    }
-    //near = Math.min(near,helicopterPosZ);
-    botom = Math.max(botom,0.0);
-*/
-    //if((helicopterAngleY%360!=0.0 && helicopterAngleY%360<=180.0) || (helicopterAngleY%360>=0.0 && helicopterAngleY%360<=180.0))
-    mProjection = perspective(
+     mProjection = perspective(
       90.0,
       aspect,
       BODY_SIZE_Z,
       3*VP_DISTANCE,
     );
-      /*
-      mProjection = ortho(
-        -20.0*aspect,
-        20.0*aspect,
-        -20.0,
-        20.0,
-        BODY_SIZE_Z,
-        3.0*VP_DISTANCE,
-      );*/
   }
 
   function getFloor(x,z){
     let ret = 0.0;
-    //let crateObj of crateInstances
     for (let buildingObj of buildingsInstances){
       let isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
       let isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
@@ -757,7 +724,6 @@ function setup(shaders) {
   function floor(floorColor) {
     selectColor(floorColor);
     multScale([WORLD_X_UPPER_LIMIT * 2.0, 1.0, WORLD_Z_UPPER_LIMIT * 2.0]);
-    //selectColor(vec3(192.0, 189.0, 165.0));
     uploadModelView();
     CUBE.draw(gl, program, mode);
   }
@@ -790,7 +756,6 @@ function setup(shaders) {
     multTranslation([-20.0, 0.0, -20.0]);
     building();
     popMatrix();
-    //buildingType1(nFloors,floorColor,windowColor,roofColor,wallColor,columnColor)
     pushMatrix();
       addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
     popMatrix();
@@ -798,7 +763,7 @@ function setup(shaders) {
       addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(80.0, BUILDING_FLOOR_HIGH / -80.0, -80.0);
+      addBuilding(80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
     popMatrix();
     pushMatrix();
       addBuilding(80.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
@@ -837,10 +802,10 @@ function setup(shaders) {
 
   function addBuilding(x,y,z){
     let currSeed = seedGenerated[currBuilding];
-    multTranslation([x,y,z]);
+    multTranslation([x,y-0.5,z]);
     buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
-    addBuildingInstance(x,y,z,BUILDING_T2_LEN+1.5,currSeed.nFloors*BUILDING_FLOOR_HIGH+1.7,BUILDING_T2_LEN+1.5);
+    addBuildingInstance(x,y,z,BUILDING_T2_LEN+1.5+BODY_SIZE_X,currSeed.nFloors*BUILDING_FLOOR_HIGH+1.0,BUILDING_T2_LEN+1.5+BODY_SIZE_Z);
     
   }
 
@@ -953,7 +918,6 @@ function setup(shaders) {
       multTranslation([i * BUILDING_T2_LEN / 3.0 + WINDOW_LEN/6.0, 0.0, BUILDING_T2_LEN / 2.0]);
       multScale([0.7, 0.7, 0.7]);
       windowGlass();
-      //windowCompleteType1(windowColor);
       popMatrix();
     }
   }
@@ -1027,13 +991,6 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
-  function windowSide() {
-    multScale([5.0, 0.5, 0.3]);
-
-    uploadModelView();
-
-    CUBE.draw(gl, program, mode);
-  }
 
   function windowGlass(){
     selectColor(WINDOW_GLASS_COLOR);
@@ -1047,12 +1004,10 @@ function setup(shaders) {
   function windowCompleteType2() {
     pushMatrix();
     windowGlass();
-    //windowCompleteType1(windowColor);
     popMatrix();
     pushMatrix();
     multTranslation([5 + 0.5, 0.0, 0.0]);
     windowGlass();
-    //windowCompleteType1(windowColor);
     popMatrix();
   }
 
@@ -1060,17 +1015,14 @@ function setup(shaders) {
   function buildingType1(nFloors,floorColor,roofColor,wallColor,columnColor) {
     for (let i = 0; i < nFloors; i++) {
       pushMatrix();
-      //selectColor(vec3(255.0, 56.0, 100.0));
       multTranslation([0.0, BUILDING_FLOOR_HIGH * i, 0.0]);
       if (i % 4 == 0) {
         selectColor(vec3(38.0, 20.0, 71.0));
         completeFloorType3(floorColor,wallColor,columnColor);
       } else {
         if (i % 3 == 0) {
-          //selectColor(vec3(255.0, 56.0, 100.0));
           completeFloorType2(floorColor,columnColor);
         } else {
-          //selectColor(vec3(255.0, 56.0, 100.0));
           completeFloorType1(floorColor,columnColor);}
 
       }
@@ -1082,7 +1034,6 @@ function setup(shaders) {
       BUILDING_FLOOR_HIGH * nFloors + 0.25 - BUILDING_FLOOR_HIGH / 2.0,
       0.0,
     ]);
-    //selectColor(vec3(38.0, 20.0, 71.0));
     roofType1(roofColor);
     popMatrix();
   }
@@ -1095,7 +1046,7 @@ function setup(shaders) {
       helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
     ) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
-    }
+      multRotationZ(WIND_RESISTANCE/10.0 * Math.sin(time * Math.PI));}
     multTranslation([0, helicopterHigh, 0]);
     multRotationZ(Math.sin(time * Math.PI));
   }
@@ -1112,9 +1063,6 @@ function setup(shaders) {
   }
 
   function helicopterAutomaticCalcule() {
-    //angulo atual, centro, posição
-    //TER EM CONTA VELOCIDADE MAXIMA
-
     helicopterPosX =
       Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) *
       AUTOMATIC_ANIMATION_RADIUS;
@@ -1206,7 +1154,7 @@ function setup(shaders) {
     //console.log("helY = " + helicopterPosY);
     //console.log("helZ = "+ helicopterPosZ);
     //console.log("Helice speed = " + heliceSpeed);
-    console.log("Inclinação da helice = " + helicopterAngleY);
+    //console.log("Inclinação d helic = " + helicopterAngleY);
     //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
     //console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
@@ -1220,17 +1168,17 @@ function setup(shaders) {
       flatten(mProjection),
     );
     if (isCenterView) {
-      //view = lookAt([xCameraPos,0.0,zCameraPos],[0,0,0],[0,1,0]);
       view = lookAt([0, 0, 0], [
-        Math.sin(horizontalDirection) + xCameraPos,
+        Math.sin(horizontalDirection),
         Math.sin(verticalDirection),
-        Math.cos(horizontalDirection) + zCameraPos,
+        Math.cos(horizontalDirection),
       ], [0, 1, 0]);
     }
     if(isFirstPersonView){
-      view = lookAt([helicopterPosX, helicopterPosY+BODY_SIZE_Y, helicopterPosZ], [
+      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
+      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [
         -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosX,
-        BODY_SIZE_Y+helicopterPosY,
+        cameraHigh,
         Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosZ,
       ], [0, 1, 0]);
     }
@@ -1240,12 +1188,7 @@ function setup(shaders) {
       hasToRestart = false;
     }
 
-    //Hide crate after CRATE_DESPAWN_TIME seconds
-    //if (time - startCrateTime > CRATE_DESPAWN_TIME) {
-    //  hideCrate();
-    //}
     loadMatrix(view);
-    //testConstruct();
     buildingsInstances = [];
     world();
   }
