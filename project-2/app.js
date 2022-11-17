@@ -63,19 +63,19 @@ let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 let hasToRestart = false;
 let isAutomaticAnimation = true;
-let isFirstPersonView = false;
-let isBottomView = false;
 
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
+const FIRST_PERSON_VIEW_MODE = "firstPersonView";
+const BOTOM_VIEW_MODE = "botomView";
+const CENTER_VIEW_MODE = "centerView";
+const DEFAULT_VIEW_MODE = "defaultView"
+let viewMode = DEFAULT_VIEW_MODE;
 
 let horizontalDirection = 0.0;
 let verticalDirection = 0.0;
-let xCameraPos = 0;
-let zCameraPos = 0;
-let isCenterView = false;
 
 //Crate
 
@@ -244,24 +244,14 @@ function setup(shaders) {
     3 * VP_DISTANCE,
   );
 
+
   mode = gl.LINES;
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
   document.onkeydown = function (event) {
     keys[event.key] = true;
-    if(isFirstPersonView || isBottomView){
-      updateOrtho();
-    }else{
-      mProjection = ortho(
-        -VP_DISTANCE * aspect,
-        VP_DISTANCE * aspect,
-        -VP_DISTANCE,
-        VP_DISTANCE,
-        -3 * VP_DISTANCE,
-        3 * VP_DISTANCE,
-      );
-    }
+    updatePerspectivePerMode();
   }
 
 
@@ -297,46 +287,35 @@ function setup(shaders) {
           if (animation) speed /= 1.1;
         }
       if(keys["1"]){
-          isCenterView = false;
-          isFirstPersonView = false;
-          isBottomView = false;
+          viewMode = DEFAULT_VIEW_MODE;
           view = axonotricView;
           keys["1"] = false;
         }
       if(keys["2"]){
-          isCenterView = false;
-          isFirstPersonView = false;
-          isBottomView = false;
+          viewMode = DEFAULT_VIEW_MODE;
           view = XZview;
           keys["2"] = false;
         }
       if(keys["3"]){
-          isCenterView = false;
-          isFirstPersonView = false;
-          isBottomView = false;
+          viewMode = DEFAULT_VIEW_MODE;
           view = ZYview;
           keys["3"] = false;
         }
       if(keys["4"]){
-          isCenterView = false;
-          isFirstPersonView = false;
-          isBottomView = false;
+          viewMode = DEFAULT_VIEW_MODE;
           view = XYview;
           keys["4"] = false;
         }
       if(keys["5"]){
-          isCenterView = true;
-          isFirstPersonView = false;
+          viewMode = CENTER_VIEW_MODE;
           keys["5"] = false;
         }
       if(keys["6"]){
-          isFirstPersonView = true;
-          isBottomView = false;
+          viewMode = FIRST_PERSON_VIEW_MODE;
           keys["6"] = false;
         }
       if(keys["7"]){
-        isBottomView = true;
-        isFirstPersonView = false;
+        viewMode = BOTOM_VIEW_MODE;
         keys["7"] = false;
       }
       if(keys["j"]){
@@ -440,6 +419,29 @@ function setup(shaders) {
         }
   }
 
+  function updatePerspectivePerMode(){
+    switch(viewMode){
+      case BOTOM_VIEW_MODE:
+
+        break;
+      case FIRST_PERSON_VIEW_MODE:
+        updateFirstPerson();
+        break;
+      case CENTER_VIEW_MODE:
+      case DEFAULT_VIEW_MODE:
+        mProjection = ortho(
+          -VP_DISTANCE * aspect,
+          VP_DISTANCE * aspect,
+          -VP_DISTANCE,
+          VP_DISTANCE,
+          -3 * VP_DISTANCE,
+          3 * VP_DISTANCE,
+        );
+        break;
+      default:
+    }
+  }
+
   function resize_canvas(event) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -448,14 +450,7 @@ function setup(shaders) {
 
     gl.viewport(0, 0, canvas.width, canvas.height);
 
-    mProjection = ortho(
-      -VP_DISTANCE * aspect,
-      VP_DISTANCE * aspect,
-      -VP_DISTANCE,
-      VP_DISTANCE,
-      -3 * VP_DISTANCE,
-      3 * VP_DISTANCE,
-    );
+    updatePerspectivePerMode();
   }
 
   function uploadModelView() {
@@ -477,7 +472,7 @@ function setup(shaders) {
     heliceShowSpeed = 0;
   }
 
-  function updateOrtho(){
+  function updateFirstPerson(){
      mProjection = perspective(
       90.0,
       aspect,
@@ -1286,6 +1281,7 @@ function setup(shaders) {
   }
 
   function render() {
+    updatePerspectivePerMode();
     //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
     //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
     //console.log("helX = " + helicopterPosX);
@@ -1305,14 +1301,14 @@ function setup(shaders) {
       false,
       flatten(mProjection),
     );
-    if (isCenterView) {
+    if (viewMode == CENTER_VIEW_MODE) {
       view = lookAt([0, 0, 0], [
         Math.sin(horizontalDirection),
         Math.sin(verticalDirection),
         Math.cos(horizontalDirection),
       ], [0, 1, 0]);
     }
-    if(isFirstPersonView){
+    if(viewMode == FIRST_PERSON_VIEW_MODE){
       let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
       view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [
         -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosX,
@@ -1321,7 +1317,7 @@ function setup(shaders) {
       ], [0, 1, 0]);
     }
 
-    if(isBottomView){
+    if(viewMode == BOTOM_VIEW_MODE){
       let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
       view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosY], [1, 0, 0]);
     }
