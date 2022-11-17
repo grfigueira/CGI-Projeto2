@@ -64,6 +64,7 @@ let animation = true; // Animation is running
 let hasToRestart = false;
 let isAutomaticAnimation = true;
 let isFirstPersonView = false;
+let isBottomView = false;
 
 //VIEWCONST
 //View
@@ -162,7 +163,7 @@ const CENTER_SPHERE_SIZE = 2.0;
 //Buildings
 let buildingsInstances = [];
 
-//Domo
+//Domo - The little creature riding the helicopter
 const DOMO_BODY_COLOR = vec3(149, 102, 73);
 const DOMO_MOUTH_COLOR = vec3(228.0, 54.0, 49.0);
 const DOMO_BODY_SIZE_X = 10.0;
@@ -207,6 +208,7 @@ const GRASS_COLOR = vec3(100.0,139.0,20.0);
 
 const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
 
+const BOX_COLOR = vec3(115, 79, 13);
 
 const axonotricView = lookAt(
   [VP_DISTANCE, VP_DISTANCE, VP_DISTANCE],
@@ -248,7 +250,7 @@ function setup(shaders) {
   window.addEventListener("resize", resize_canvas);
   document.onkeydown = function (event) {
     keys[event.key] = true;
-    if(isFirstPersonView){
+    if(isFirstPersonView || isBottomView){
       updateOrtho();
     }else{
       mProjection = ortho(
@@ -297,24 +299,28 @@ function setup(shaders) {
       if(keys["1"]){
           isCenterView = false;
           isFirstPersonView = false;
+          isBottomView = false;
           view = axonotricView;
           keys["1"] = false;
         }
       if(keys["2"]){
           isCenterView = false;
           isFirstPersonView = false;
+          isBottomView = false;
           view = XZview;
           keys["2"] = false;
         }
       if(keys["3"]){
           isCenterView = false;
           isFirstPersonView = false;
+          isBottomView = false;
           view = ZYview;
           keys["3"] = false;
         }
       if(keys["4"]){
           isCenterView = false;
           isFirstPersonView = false;
+          isBottomView = false;
           view = XYview;
           keys["4"] = false;
         }
@@ -325,8 +331,14 @@ function setup(shaders) {
         }
       if(keys["6"]){
           isFirstPersonView = true;
+          isBottomView = false;
           keys["6"] = false;
         }
+      if(keys["7"]){
+        isBottomView = true;
+        isFirstPersonView = false;
+        keys["7"] = false;
+      }
       if(keys["j"]){
           horizontalDirection += CAMERA_ANGLE_CHANGE;
         }
@@ -776,7 +788,7 @@ function setup(shaders) {
   function crate(cratePosX, cratePosY, cratePosZ) {
     multTranslation([cratePosX, cratePosY, cratePosZ]);
     multScale([CRATE_SIZE, CRATE_SIZE, CRATE_SIZE]);
-    selectColor(vec3(255.0, 0.0, 0.0));
+    selectColor(BOX_COLOR);
     uploadModelView();
     CUBE.draw(gl, program, mode);
   }
@@ -810,10 +822,10 @@ function setup(shaders) {
       addBuilding(10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-38.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
+      addBuilding(28.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-70.0,BUILDING_FLOOR_HIGH/2.0,60.0);
+      addBuilding(-70.0,BUILDING_FLOOR_HIGH/2.0,30.0);
     popMatrix();
     currBuilding=0;
 
@@ -1307,6 +1319,11 @@ function setup(shaders) {
         cameraHigh,
         Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosZ,
       ], [0, 1, 0]);
+    }
+
+    if(isBottomView){
+      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
+      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosY], [1, 0, 0]);
     }
 
     if (hasToRestart) {
