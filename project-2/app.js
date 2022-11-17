@@ -162,6 +162,17 @@ const CENTER_SPHERE_SIZE = 2.0;
 //Buildings
 let buildingsInstances = [];
 
+//Domo
+const DOMO_BODY_COLOR = vec3(149, 102, 73);
+const DOMO_MOUTH_COLOR = vec3(228.0, 54.0, 49.0);
+const DOMO_BODY_SIZE_X = 10.0;
+const DOMO_BODY_SIZE_Y = 30.0;
+const DOMO_BODY_SIZE_Z = 20.0
+
+const DOMO_LEG_SIZE_X = 14.0;
+const DOMO_LEG_SIZE_Y = 6.0;
+const DOMO_LEG_SIZE_Z = 6.0;
+
 //type1
 const BASE_HEIGHT = 2.0;
 const BASE_SIZE = 9.0;
@@ -730,6 +741,12 @@ function setup(shaders) {
     ]);
     feet();
     popMatrix();
+    pushMatrix();
+      multScale([0.15, 0.15, 0.15]);
+      multRotationY(-90);
+      multTranslation([0.0, 27.0, 0.0]);
+      domo();
+    popMatrix();
   }
   // Usar isto antes de uma chamada draw() para mudar a cor
   function selectColor(color){
@@ -770,12 +787,12 @@ function setup(shaders) {
 
   function world() {
     pushMatrix();
-    multTranslation([0.0, -1.0, 0.0]);
-    floor(GRASS_COLOR);
+      multTranslation([0.0, -1.0, 0.0]);
+      floor(GRASS_COLOR);
     popMatrix();
     pushMatrix();
-    multTranslation([-20.0, 0.0, -20.0]);
-    building();
+      multTranslation([-20.0, 0.0, -20.0]);
+      building();
     popMatrix();
     pushMatrix();
       addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
@@ -801,18 +818,18 @@ function setup(shaders) {
     currBuilding=0;
 
     pushMatrix();
-    multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
-    helicopterStillAnimation();
-    helicopterFlight();
-    multRotationY(helicopterAngleY);
-    multRotationX(
-      HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
-    );
-    helicopter();
+      multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
+      helicopterStillAnimation();
+      helicopterFlight();
+      multRotationY(helicopterAngleY);
+      multRotationX(
+        HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
+      );
+      helicopter();
     popMatrix();
-    pushMatrix();
-    centerSphere();
-    popMatrix();
+    //pushMatrix();
+    //centerSphere();
+    //popMatrix();
     for (let crateObj of crateInstances) {
       pushMatrix();
       moveCrate(crateObj);
@@ -1059,6 +1076,94 @@ function setup(shaders) {
     popMatrix();
   }
 
+  function domoBody(){
+    selectColor(DOMO_BODY_COLOR);
+    multScale([DOMO_BODY_SIZE_X, DOMO_BODY_SIZE_Y, DOMO_BODY_SIZE_Z]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function domoColum(){
+    selectColor(vec3(0.0, 0.0, 0.0));
+    multScale([0.5, DOMO_BODY_SIZE_Y, 0.5]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function domoBodyColum(){
+    pushMatrix();
+      domoBody();
+    popMatrix();
+  }
+
+  function domoLeg(){
+    selectColor(DOMO_BODY_COLOR);
+    multScale([DOMO_LEG_SIZE_X, DOMO_LEG_SIZE_Y, DOMO_LEG_SIZE_Z]);
+    multRotationY(Math.PI / 2);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function domoMouth(){
+    selectColor(DOMO_MOUTH_COLOR);
+    multScale([1.0, 6.0, DOMO_BODY_SIZE_Z / 2]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function domoEye(){
+    selectColor(vec3(0.0, 0.0, 0.0));
+    multScale([2.5, 2.5, 2.5]);
+    uploadModelView();
+    SPHERE.draw(gl, program, mode);
+  }
+
+  function domoTooth(){
+    selectColor(vec3(255.0, 255.0, 255.0));
+    multScale([2.0, 2.0, 2.0]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+
+  function domo(){
+    pushMatrix();
+      domoBodyColum();
+    popMatrix();
+    pushMatrix();
+      multTranslation([DOMO_BODY_SIZE_X / 2, -DOMO_BODY_SIZE_Y / 2 + 6.0 / 2, DOMO_LEG_SIZE_Z]);
+      domoLeg();
+    popMatrix();
+    pushMatrix();
+      multTranslation([DOMO_BODY_SIZE_X / 2, -DOMO_BODY_SIZE_Y / 2 + 6.0 / 2, -DOMO_LEG_SIZE_Z]);
+      domoLeg();
+    popMatrix();
+    pushMatrix();
+      multTranslation([DOMO_BODY_SIZE_X / 2, 1.0, 0.0])
+      domoMouth();
+    popMatrix();
+    pushMatrix();
+      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, -BODY_SIZE_Z / 1.5]);
+      domoEye();
+    popMatrix();
+    pushMatrix();
+      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, BODY_SIZE_Z / 1.5]);
+      domoEye();
+    popMatrix();
+    for(let i = 0; i < 3; i++){
+      pushMatrix();
+        multTranslation([DOMO_BODY_SIZE_X / 2, -0.5, BODY_SIZE_Z / 1.5 - 2.0 * i * 2 + 0.5 ]);
+        domoTooth();
+      popMatrix();
+    }
+    for(let i = 0; i < 3; i++){
+      pushMatrix();
+        multTranslation([DOMO_BODY_SIZE_X / 2, 3.0, BODY_SIZE_Z / 1.5 - 2.0 * i * 2 + 0.5 ]);
+        domoTooth();
+      popMatrix();
+    }
+  }
+
   function helicopterStillAnimation() {
     let helicopterHigh = BODY_SIZE_Y / 2.0 +
       (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
@@ -1212,6 +1317,7 @@ function setup(shaders) {
     loadMatrix(view);
     buildingsInstances = [];
     world();
+    //domo();
     checkKeys();
   }
 }
