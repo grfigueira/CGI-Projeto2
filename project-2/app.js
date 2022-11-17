@@ -27,7 +27,6 @@
  *  ' ': Largar caixa
  *  'm': Gerar novo cenário
  * 
- * 
  */
 
 
@@ -208,6 +207,7 @@ const ZYview = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x p
 const XYview = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]); //olhar do z para o centro
 
 let view = axonotricView;
+let keys = {}; // Map that stores whether each key is pressed or not
 
 function setup(shaders) {
   generateSeeds();
@@ -235,160 +235,27 @@ function setup(shaders) {
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
-
   document.onkeydown = function (event) {
-    switch (event.key) {
-      case "w":
-        mode = gl.LINES;
-        break;
-      case "s":
-        mode = gl.TRIANGLES;
-        break;
-      case "p":
-        animation = !animation;
-        break;
-      case "+":
-        if (animation) speed *= 1.1;
-        break;
-      case "-":
-        if (animation) speed /= 1.1;
-        break;
-      case "1":
-        isCenterView = false;
-        isFirstPersonView = false;
-        view = axonotricView;
-        break;
-      case "2":
-        isCenterView = false;
-        isFirstPersonView = false;
-        view = XZview;
-        break;
-      case "3":
-        isCenterView = false;
-        isFirstPersonView = false;
-        view = ZYview;
-        break;
-      case "4":
-        isCenterView = false;
-        isFirstPersonView = false;
-        view = XYview;
-        break;
-      case "5":
-        isCenterView = true;
-        isFirstPersonView = false;
-        break;
-      case "6":
-        isFirstPersonView = true;
-        break;
-      case "j":
-        horizontalDirection += CAMERA_ANGLE_CHANGE;
-        break;
-      case "l":
-        horizontalDirection -= CAMERA_ANGLE_CHANGE;
-        break;
-      case "i":
-        if (verticalDirection < Math.PI / 2.0) {
-          verticalDirection += CAMERA_ANGLE_CHANGE;
-        }
-        break;
-      case "k":
-        if (verticalDirection > -Math.PI / 2.0) {
-          verticalDirection -= CAMERA_ANGLE_CHANGE;
-        }
-        break;
-      case "r":
-        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
-          if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
-            helicopterSpeed++;
-          }
-        }
-        break;
-      case "d":
-        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
-          helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
-          if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
-            helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
-              HELICOPTER_ANGLE_CHANGE;
-          }
-        }
-        break;
-
-      case "g":
-        if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
-          helicopterAngleY -= HELICOPTER_ANGLE_CHANGE;
-          if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
-            helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
-              HELICOPTER_ANGLE_CHANGE;
-          }
-        }
-        break;
-
-      case "ArrowUp":
-        if (heliceSpeed < HELICE_FLYING_SPEED) {
-          heliceSpeed += 70;
-          heliceShowSpeed += 70;
-        } else {if(heliceSpeed<HELICE_MAX_SPEED){
-          heliceSpeed += 70.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
-          if(heliceShowSpeed<2*HELICE_FLYING_SPEED){
-          heliceShowSpeed += 5.0;}
-        }}
-        break;
-      case "ArrowDown":
-        let floorLevel = getFloor(helicopterPosX,helicopterPosZ);
-        let toRemove = speed * (helicopterPosY - WORLD_X_LOWER_LIMIT) / 10.0;
-        if (
-          isWithinWorldLimit(
-            helicopterPosX,
-            helicopterPosY - toRemove,
-            helicopterPosZ,
-          )
-        ) {
-          helicopterPosY -= toRemove;
-        } else {
-          helicopterPosY = floorLevel;
-        }
-        break;
-      case "ArrowLeft":
-        if (
-          isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
-          helicopterSpeed < HELICOPTER_MAX_SPEED
-        ) {
-          helicopterSpeed += speed * speed * (HELICOPTER_ANGLE_CHANGE) *
-            (HELICOPTER_ANGLE_CHANGE) * AUTOMATIC_ANIMATION_RADIUS;
-        }
-        break;
-      case "q":
-        VP_DISTANCE--;
-        break;
-      case "a":
-        VP_DISTANCE++;
-        break;
-      case "z":
-        //Troca o tipo de animacao para manual/automatica
-        isAutomaticAnimation = !isAutomaticAnimation;
-        hasToRestart = true;
-        break;
-      case " ":
-        spawnCrate();
-        break;
-      case "m":
-        generateSeeds();
-        break;
-
-    }
+    keys[event.key] = true;
     if(isFirstPersonView){
       updateOrtho();
     }else{
-    mProjection = ortho(
-      -VP_DISTANCE * aspect,
-      VP_DISTANCE * aspect,
-      -VP_DISTANCE,
-      VP_DISTANCE,
-      -3 * VP_DISTANCE,
-      3 * VP_DISTANCE,
-    );
-  };
+      mProjection = ortho(
+        -VP_DISTANCE * aspect,
+        VP_DISTANCE * aspect,
+        -VP_DISTANCE,
+        VP_DISTANCE,
+        -3 * VP_DISTANCE,
+        3 * VP_DISTANCE,
+      );
+    }
   }
+
+
+  window.addEventListener("keyup", (event) => {
+    keys[event.key] = false; // Key no longer pressed
+  });
+
   gl.clearColor(204.0 / 255.0, 151.0 / 255.0, 142.0 / 255.0, 1.0); // Background cinzento
   SPHERE.init(gl);
   CYLINDER.init(gl);
@@ -396,6 +263,159 @@ function setup(shaders) {
   PYRAMID.init(gl);
   gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
   window.requestAnimationFrame(render);
+
+  function checkKeys(){
+      if(keys["w"]){
+          mode = gl.LINES;
+          keys["w"] = false;
+        }
+      if(keys["s"]){
+          mode = gl.TRIANGLES;
+          keys["s"] = false;
+        }
+      if(keys["p"]){
+          animation = !animation;
+          keys["p"] = false;
+        }
+      if(keys["+"]){
+          if (animation) speed *= 1.1;
+        }
+      if(keys["-"]){
+          if (animation) speed /= 1.1;
+        }
+      if(keys["1"]){
+          isCenterView = false;
+          isFirstPersonView = false;
+          view = axonotricView;
+          keys["1"] = false;
+        }
+      if(keys["2"]){
+          isCenterView = false;
+          isFirstPersonView = false;
+          view = XZview;
+          keys["2"] = false;
+        }
+      if(keys["3"]){
+          isCenterView = false;
+          isFirstPersonView = false;
+          view = ZYview;
+          keys["3"] = false;
+        }
+      if(keys["4"]){
+          isCenterView = false;
+          isFirstPersonView = false;
+          view = XYview;
+          keys["4"] = false;
+        }
+      if(keys["5"]){
+          isCenterView = true;
+          isFirstPersonView = false;
+          keys["5"] = false;
+        }
+      if(keys["6"]){
+          isFirstPersonView = true;
+          keys["6"] = false;
+        }
+      if(keys["j"]){
+          horizontalDirection += CAMERA_ANGLE_CHANGE;
+        }
+      if(keys["l"]){
+          horizontalDirection -= CAMERA_ANGLE_CHANGE;
+        }
+      if(keys["i"]){
+          if (verticalDirection < Math.PI / 2.0) {
+            verticalDirection += CAMERA_ANGLE_CHANGE;
+          }
+        }
+      if(keys["k"]){
+          if (verticalDirection > -Math.PI / 2.0) {
+            verticalDirection -= CAMERA_ANGLE_CHANGE;
+          }
+        }
+      if(keys["r"]){
+          if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
+            if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
+              helicopterSpeed++;
+            }
+          }
+        }
+      if(keys["d"]){
+          if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
+            helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
+            if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
+              helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
+                HELICOPTER_ANGLE_CHANGE;
+            }
+          }
+        }
+
+      if(keys["g"]){
+          if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
+            helicopterAngleY -= HELICOPTER_ANGLE_CHANGE;
+            if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
+              helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
+                HELICOPTER_ANGLE_CHANGE;
+            }
+          }
+        }
+
+      if(keys["ArrowUp"]){
+          if (heliceSpeed < HELICE_FLYING_SPEED) {
+            heliceSpeed += 70;
+            heliceShowSpeed += 70;
+          } else {if(heliceSpeed<HELICE_MAX_SPEED){
+            heliceSpeed += 70.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
+            if(heliceShowSpeed<2*HELICE_FLYING_SPEED){
+            heliceShowSpeed += 5.0;}
+          }}
+        }
+      if(keys["ArrowDown"]){
+          let floorLevel = getFloor(helicopterPosX,helicopterPosZ);
+          let toRemove = speed * (helicopterPosY - WORLD_X_LOWER_LIMIT) / 10.0;
+          if (
+            isWithinWorldLimit(
+              helicopterPosX,
+              helicopterPosY - toRemove,
+              helicopterPosZ,
+            )
+          ) {
+            helicopterPosY -= toRemove;
+          } else {
+            helicopterPosY = floorLevel;
+          }
+          }
+      if(keys["ArrowLeft"]){
+          if (
+          isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
+          helicopterSpeed < HELICOPTER_MAX_SPEED
+        ) {
+          helicopterSpeed += speed * speed * (HELICOPTER_ANGLE_CHANGE) *
+            (HELICOPTER_ANGLE_CHANGE) * AUTOMATIC_ANIMATION_RADIUS;
+        }
+        }
+      if(keys["q"]){
+          VP_DISTANCE--;
+          keys["q"] = false;
+        }
+      if(keys["a"]){
+          VP_DISTANCE++;
+          keys["a"] = false;
+        }
+      if(keys["z"]){
+          //Troca o tipo de animacao para manual/automatica
+          isAutomaticAnimation = !isAutomaticAnimation;
+          hasToRestart = true;
+          keys["z"] = false;
+        }
+      if(keys[" "]){
+          spawnCrate();
+          keys[" "] = false;
+        }
+      if(keys["m"]){
+          generateSeeds();
+          keys["m"] = false;
+        }
+  }
 
   function resize_canvas(event) {
     canvas.width = window.innerWidth;
@@ -474,7 +494,6 @@ function setup(shaders) {
       columnColor: Math.floor(Math.random() * COLUMN_COLORS.length),
       wallColor: Math.floor(Math.random() * WALL_COLORS.length),
       roofColor: Math.floor(Math.random() * ROOF_COLORS.length),
-
     });}
 
   }
@@ -492,14 +511,16 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
-    crateInstances.push({
-      posX: helicopterPosX,
-      posY: helicopterPosY,
-      posZ: helicopterPosZ,
-      startTime: time,
-      speed: helicopterSpeed,
-      angle: helicopterAngleY,
-    });
+    if(getFloor(helicopterPosX, helicopterPosZ) != helicopterPosY){
+      crateInstances.push({
+        posX: helicopterPosX,
+        posY: helicopterPosY,
+        posZ: helicopterPosZ,
+        startTime: time,
+        speed: helicopterSpeed,
+        angle: helicopterAngleY,
+      });
+    } 
   }
 
   /*
@@ -1191,6 +1212,7 @@ function setup(shaders) {
     loadMatrix(view);
     buildingsInstances = [];
     world();
+    checkKeys();
   }
 }
 
