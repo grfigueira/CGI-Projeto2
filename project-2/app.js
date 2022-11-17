@@ -1,3 +1,36 @@
+/**
+ * Controlos:
+ *  'w': Muda para visualização em malha de arame.
+ *  's': Muda para visualização com superficies preenchidas
+ *  'p': Pausa a animação
+ *  '+': Aumenta a velocidade de animação
+ *  '-': Diminui a velocidade de animação
+ *  '1': Projeção axonometrica
+ *  '2': Vista de alçado principal
+ *  '3': Vista de planta
+ *  '4': Vista de alçado lateral direito
+ *  '5': Vista livre
+ *  '6': Vista de primeira pessoa no helicoptero
+ *  'j': Alterar direção horizontal de vista livre para menos
+ *  'l': Alterar direção horizontal de vista livre para mais
+ *  'i': Alterar direção vertical de vista livre para mais
+ *  'k': Alterar direção vertical de vista livre para menos
+ *  'r': Helicoptero andar para a frente
+ *  'g': Helicoptero rodar para a direita
+ *  'd': Helicoptero rodar para a esquerda
+ *  'ArrowUp': Subir o helicoptero (aumentando a velocidade da helice)
+ *  'ArrowDown': Descer o helicoptero
+ *  'ArrowLeft': Mover o helicoptero em circulo (apenas quando está em modo automatico)
+ *  'q': Aumentar distancia de visualização (apenas em Vista Livre)
+ *  'a': Diminuir distancia de visualização (apenas em Vista Livre)
+ *  'z': Mudar de modo automático para manual e vice versa
+ *  ' ': Largar caixa
+ *  'm': Gerar novo cenário
+ * 
+ * 
+ */
+
+
 import {
   buildProgramFromSources,
   loadShadersFromURLS,
@@ -20,6 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
+import { perspective } from "./libs/MV.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -30,6 +64,7 @@ let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 let hasToRestart = false;
 let isAutomaticAnimation = true;
+let isFirstPersonView = false;
 
 //VIEWCONST
 //View
@@ -57,7 +92,8 @@ const WORLD_X_LOWER_LIMIT = -100.0;
 const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
-const GRAVITY = 10.0; // m/s^2
+//Estes valores foram adaptados de acordo com alguns testes
+const GRAVITY = 15.0; // m/s^2
 const WIND_RESISTANCE = 10.0; // m/s^2
 
 //Helicopter movement
@@ -85,6 +121,7 @@ const HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
 let heliceSpeed = 0;
 let heliceShowSpeed = 0;
 const HELICE_FLYING_SPEED = 1300;
+const HELICE_MAX_SPEED = 1500;
 const HELICE_NUM = 3;
 
 //Helice connector
@@ -218,24 +255,30 @@ function setup(shaders) {
         break;
       case "1":
         isCenterView = false;
+        isFirstPersonView = false;
         view = axonotricView;
         break;
       case "2":
         isCenterView = false;
+        isFirstPersonView = false;
         view = XZview;
         break;
       case "3":
         isCenterView = false;
+        isFirstPersonView = false;
         view = ZYview;
         break;
       case "4":
         isCenterView = false;
+        isFirstPersonView = false;
         view = XYview;
         break;
       case "5":
         isCenterView = true;
+        isFirstPersonView = false;
         break;
       case "6":
+        isFirstPersonView = true;
         break;
       case "j":
         horizontalDirection += CAMERA_ANGLE_CHANGE;
@@ -284,11 +327,11 @@ function setup(shaders) {
         if (heliceSpeed < HELICE_FLYING_SPEED) {
           heliceSpeed += 70;
           heliceShowSpeed += 70;
-        } else {
-          heliceSpeed += 20.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
+        } else {if(heliceSpeed<HELICE_MAX_SPEED){
+          heliceSpeed += 70.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
           if(heliceShowSpeed<2*HELICE_FLYING_SPEED){
           heliceShowSpeed += 5.0;}
-        }
+        }}
         break;
       case "ArrowDown":
         let floorLevel = getFloor(helicopterPosX,helicopterPosZ);
@@ -333,7 +376,11 @@ function setup(shaders) {
       case "m":
         generateSeeds();
         break;
+
     }
+    if(isFirstPersonView){
+      updateOrtho();
+    }else{
     mProjection = ortho(
       -VP_DISTANCE * aspect,
       VP_DISTANCE * aspect,
@@ -343,7 +390,7 @@ function setup(shaders) {
       3 * VP_DISTANCE,
     );
   };
-
+  }
   gl.clearColor(204.0 / 255.0, 151.0 / 255.0, 142.0 / 255.0, 1.0); // Background cinzento
   SPHERE.init(gl);
   CYLINDER.init(gl);
@@ -389,19 +436,57 @@ function setup(shaders) {
     heliceShowSpeed = 0;
   }
 
+  function updateOrtho(){
+    //minX,maxX,minY,maxY,minZ,maxZ
+    //view do helicoptero
+    //130 graus de visao no y
+    //200 no x e z
+    let left =  (helicopterPosX-VP_DISTANCE*Math.cos((helicopterAngleY-180.0/2.0)*Math.PI/180.0))
+    let right = (helicopterPosX+VP_DISTANCE*Math.cos((helicopterAngleY+180.0/2.0)*Math.PI/180.0))
+    let botom = (helicopterPosY+VP_DISTANCE*Math.sin((-90.0/2.0)*Math.PI/180.0))
+    let top =   (helicopterPosY+VP_DISTANCE*Math.sin((90.0/2.0)*Math.PI/180.0))
+    let near =  (helicopterPosZ-VP_DISTANCE*Math.sin((helicopterAngleY-180.0/2.0)*Math.PI/180.0));
+    let far =   (helicopterPosZ+VP_DISTANCE*Math.sin((helicopterAngleY+180.0/2.0)*Math.PI/180.0));
+/*
+    if(right == left){
+      left = helicopterAngleY;
+    }
+    if(near == far){
+      near = helicopterAngleY;
+    }
+    //near = Math.min(near,helicopterPosZ);
+    botom = Math.max(botom,0.0);
+*/
+    //if((helicopterAngleY%360!=0.0 && helicopterAngleY%360<=180.0) || (helicopterAngleY%360>=0.0 && helicopterAngleY%360<=180.0))
+    mProjection = perspective(
+      90.0,
+      aspect,
+      BODY_SIZE_Z,
+      3*VP_DISTANCE,
+    );
+      /*
+      mProjection = ortho(
+        -20.0*aspect,
+        20.0*aspect,
+        -20.0,
+        20.0,
+        BODY_SIZE_Z,
+        3.0*VP_DISTANCE,
+      );*/
+  }
+
   function getFloor(x,z){
     let ret = 0.0;
     //let crateObj of crateInstances
     for (let buildingObj of buildingsInstances){
       let isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
       let isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
-      console.log("X: " +isXInside);
-      console.log("Z: " +isZInside);
+
         if(isXInside && isZInside){
           ret = Math.max(ret,buildingObj.varY);
         }
     }
-    console.log("Get floor output " + ret);
+
     return ret;
   }
 
@@ -710,13 +795,13 @@ function setup(shaders) {
       addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-84.0, BUILDING_FLOOR_HIGH / 2.0, -37.0);
+      addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-78.0, BUILDING_FLOOR_HIGH / 2.0, 0.0);
+      addBuilding(80.0, BUILDING_FLOOR_HIGH / -80.0, -80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-38.0, BUILDING_FLOOR_HIGH / 2.0, -83.0);
+      addBuilding(80.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
       addBuilding(10.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
@@ -756,7 +841,6 @@ function setup(shaders) {
     buildingType1(currSeed.nFloors,BUILDING_FLOOR_BASE_COLORS[currSeed.floorColor],ROOF_COLORS[currSeed.roofColor],WALL_COLORS[currSeed.wallColor],COLUMN_COLORS[currSeed.columnColor]);
     currBuilding++;
     addBuildingInstance(x,y,z,BUILDING_T2_LEN+1.5,currSeed.nFloors*BUILDING_FLOOR_HIGH+1.7,BUILDING_T2_LEN+1.5);
-    console.log("nInstances = " + buildingsInstances.length);
     
   }
 
@@ -1013,7 +1097,7 @@ function setup(shaders) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
     }
     multTranslation([0, helicopterHigh, 0]);
-    multRotationZ(0.7 * Math.sin(time * Math.PI));
+    multRotationZ(Math.sin(time * Math.PI));
   }
 
   function helicopterFlight() {
@@ -1122,9 +1206,9 @@ function setup(shaders) {
     //console.log("helY = " + helicopterPosY);
     //console.log("helZ = "+ helicopterPosZ);
     //console.log("Helice speed = " + heliceSpeed);
-    //console.log("Inclinação da helice = " + helicopterAngleY);
+    console.log("Inclinação da helice = " + helicopterAngleY);
     //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
-    console.log("Speed = " + helicopterSpeed);
+    //console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1143,6 +1227,14 @@ function setup(shaders) {
         Math.cos(horizontalDirection) + zCameraPos,
       ], [0, 1, 0]);
     }
+    if(isFirstPersonView){
+      view = lookAt([helicopterPosX, helicopterPosY+BODY_SIZE_Y, helicopterPosZ], [
+        -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosX,
+        BODY_SIZE_Y+helicopterPosY,
+        Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosZ,
+      ], [0, 1, 0]);
+    }
+
     if (hasToRestart) {
       restartHelicopter();
       hasToRestart = false;
