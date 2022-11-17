@@ -431,7 +431,8 @@ function setup(shaders) {
           keys["z"] = false;
         }
       if(keys[" "]){
-          spawnCrate();
+        if(isCrateAlowed(helicopterPosX,helicopterPosZ)){
+          spawnCrate();}
           keys[" "] = false;
         }
       if(keys["m"]){
@@ -488,9 +489,11 @@ function setup(shaders) {
 
   function getFloor(x,z){
     let ret = 0.0;
+    let isXInside = false;
+    let isZInside = false;
     for (let buildingObj of buildingsInstances){
-      let isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
-      let isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
+      isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
+      isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
 
         if(isXInside && isZInside){
           ret = Math.max(ret,buildingObj.varY);
@@ -498,6 +501,19 @@ function setup(shaders) {
     }
 
     return ret;
+  }
+
+  function isCrateAlowed(x,z){
+    for (let i = 0; i<crateInstances.length;i++){ 
+      let crateObj = crateInstances[i];
+      let isXInside = crateObj.posX + CRATE_SIZE/2.0>x && crateObj.posX - CRATE_SIZE/2.0<x;
+      let isZInside = crateObj.posZ + CRATE_SIZE/2.0>z && crateObj.posZ - CRATE_SIZE/2.0<z;
+
+        if(isXInside && isZInside){
+          return false;
+        }
+    }
+    return true;
   }
 
   function isWithinWorldLimit(x, y, z) {
