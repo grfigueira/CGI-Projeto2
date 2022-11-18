@@ -16,6 +16,7 @@
  *  'i': Alterar direção vertical de vista livre para mais
  *  'k': Alterar direção vertical de vista livre para menos
  *  'r': Helicoptero andar para a frente
+ *  'f': Helicoptero abranda
  *  'g': Helicoptero rodar para a direita
  *  'd': Helicoptero rodar para a esquerda
  *  'ArrowUp': Subir o helicoptero (aumentando a velocidade da helice)
@@ -341,6 +342,11 @@ function setup(shaders) {
             }
           }
         }
+      if(keys["f"]){
+        if (helicopterSpeed > 0.0) {
+          helicopterSpeed--;
+        }
+      }
       if(keys["d"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
             helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
