@@ -70,7 +70,7 @@ let isAutomaticAnimation = true;
 let VP_DISTANCE = 100.0;
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
-const BOTOM_VIEW_MODE = "botomView";
+const BOTTOM_VIEW_MODE = "botomView";
 const CENTER_VIEW_MODE = "centerView";
 const DEFAULT_VIEW_MODE = "defaultView"
 let viewMode = DEFAULT_VIEW_MODE;
@@ -316,7 +316,7 @@ function setup(shaders) {
           keys["6"] = false;
         }
       if(keys["7"]){
-        viewMode = BOTOM_VIEW_MODE;
+        viewMode = BOTTOM_VIEW_MODE;
         keys["7"] = false;
       }
       if(keys["j"]){
@@ -428,7 +428,7 @@ function setup(shaders) {
 
   function updatePerspectivePerMode(){
     switch(viewMode){
-      case BOTOM_VIEW_MODE:
+      case BOTTOM_VIEW_MODE:
 
         break;
       case FIRST_PERSON_VIEW_MODE:
@@ -1345,7 +1345,7 @@ function setup(shaders) {
       ], [0, 1, 0]);
     }
 
-    if(viewMode == BOTOM_VIEW_MODE){
+    if(viewMode == BOTTOM_VIEW_MODE){
       let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
       view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosY], [1, 0, 0]);
     }
