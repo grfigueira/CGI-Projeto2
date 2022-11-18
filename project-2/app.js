@@ -551,7 +551,7 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
-    if(getFloor(helicopterPosX, helicopterPosZ) != helicopterPosY){
+    if(getFloor(helicopterPosX, helicopterPosZ) < helicopterPosY){
       crateInstances.push({
         posX: helicopterPosX,
         posY: helicopterPosY,
@@ -1290,12 +1290,18 @@ function setup(shaders) {
     let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
     let newZ = crate.posZ + Math.cos(crate.angle * Math.PI / 180) * crate.speed * speed;
     let floor = getFloor(newX,newZ);
+    if(newY < CRATE_SIZE / 2.0){newY = CRATE_SIZE/2.0}
     if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2.0, crate.posZ) && crate.posY > CRATE_SIZE / 2.0 + floor) {
       crate.posY = newY;
       crate.posX = newX;
       crate.posZ = newZ;
-    } else {
-      crate.posY = CRATE_SIZE / 2.0 + floor;
+    } else{
+      if(CRATE_SIZE/2.0 + floor > crate.posY){
+        crate.posY = newY;
+      }
+      else{
+        crate.posY = CRATE_SIZE / 2.0 + floor;
+      }
     }
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
