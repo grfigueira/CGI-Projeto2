@@ -94,7 +94,7 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-const GRAVITY = 18.0; // m/s^2
+const GRAVITY = 29.8; // m/s^2
 const WIND_RESISTANCE = 10.0; // m/s^2
 
 //Helicopter movement
@@ -120,7 +120,6 @@ const HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
 
 //All helices
 let heliceSpeed = 0;
-let heliceShowSpeed = 0;
 const HELICE_FLYING_SPEED = 1300;
 const HELICE_MAX_SPEED = 1500;
 const HELICE_NUM = 3;
@@ -161,8 +160,14 @@ const FEET_Z = BODY_SIZE_Z;
 
 const CENTER_SPHERE_SIZE = 2.0;
 
+//General helicopter
+const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
+
+
 //Buildings
 let buildingsInstances = [];
+const MAX_FLOOR_NUMBER = 8;
+const MIN_FLOOR_NUMBER = 3;
 
 //Domo - The little creature riding the helicopter
 const DOMO_BODY_COLOR = vec3(149, 102, 73);
@@ -210,6 +215,14 @@ const GRASS_COLOR = vec3(100.0,139.0,20.0);
 const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
 
 const BOX_COLOR = vec3(115, 79, 13);
+
+const HELICE_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
+const HELICE_PART_COLOR = vec3(0.0, 0.0, 255.0);
+const TAIL_END_COLOR = vec3(255.0, 0.0, 0.0);
+const TAIL_MAIN_CONECT_COLOR = vec3(255.0, 0.0, 0.0);
+const BODY_COLOR = vec3(255.0, 0.0, 0.0);
+const LEG_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
+const FEET_END_COLOR = vec3(255.0, 255.0, 0.0);
 
 const axonotricView = lookAt(
   [VP_DISTANCE, VP_DISTANCE, VP_DISTANCE],
@@ -349,7 +362,7 @@ function setup(shaders) {
       }
       if(keys["d"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
-            helicopterAngleY += HELICOPTER_ANGLE_CHANGE;
+            helicopterAngleY += HELICOPTER_ANGLE_CHANGE/2.0;
             if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
               helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
                 HELICOPTER_ANGLE_CHANGE;
@@ -359,7 +372,7 @@ function setup(shaders) {
 
       if(keys["g"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
-            helicopterAngleY -= HELICOPTER_ANGLE_CHANGE;
+            helicopterAngleY -= HELICOPTER_ANGLE_CHANGE/2.0;
             if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
               helicopterSpeed += 0.3 * speed * HELICOPTER_ANGLE_CHANGE *
                 HELICOPTER_ANGLE_CHANGE;
@@ -369,25 +382,19 @@ function setup(shaders) {
 
       if(keys["ArrowUp"]){
           if (heliceSpeed < HELICE_FLYING_SPEED) {
-            heliceSpeed += 70;
-            heliceShowSpeed += 70;
-          } else {if(heliceSpeed<HELICE_MAX_SPEED){
-            heliceSpeed += 70.0 / ((heliceSpeed - HELICE_FLYING_SPEED) + 1.0);
-            if(heliceShowSpeed<2*HELICE_FLYING_SPEED){
-            heliceShowSpeed += 5.0;}
-          }}
+            heliceSpeed += 50.0;
+          } else {
+            let newY = helicopterPosY + 0.2;
+            if(isWithinWorldLimit(helicopterPosX,newY,helicopterPosZ)){
+              helicopterPosY = newY;
+            }  
+          }
         }
       if(keys["ArrowDown"]){
           let floorLevel = getFloor(helicopterPosX,helicopterPosZ);
-          let toRemove = speed * (helicopterPosY - WORLD_X_LOWER_LIMIT) / 10.0;
-          if (
-            isWithinWorldLimit(
-              helicopterPosX,
-              helicopterPosY - toRemove,
-              helicopterPosZ,
-            )
-          ) {
-            helicopterPosY -= toRemove;
+          let newY = helicopterPosY - 0.2;
+          if (isWithinWorldLimit(helicopterPosX,newY,helicopterPosZ)) {
+            helicopterPosY = newY;
           } else {
             helicopterPosY = floorLevel;
           }
@@ -449,7 +456,7 @@ function setup(shaders) {
     }
   }
 
-  function resize_canvas(event) {
+  function resize_canvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -476,7 +483,6 @@ function setup(shaders) {
     helicopterPosZ = HELICOPTER_INIT_Z;
 
     heliceSpeed = 0;
-    heliceShowSpeed = 0;
   }
 
   function updateFirstPerson(){
@@ -529,7 +535,7 @@ function setup(shaders) {
     seedGenerated = [];
     for(let i = 0; i<N_BUILDINGS;i++){
     seedGenerated.push({
-      nFloors: Math.floor(Math.random()* 5.0 + 3.0),
+      nFloors: Math.floor(Math.random()* (MAX_FLOOR_NUMBER-MIN_FLOOR_NUMBER) + MIN_FLOOR_NUMBER),
       floorColor: Math.floor(Math.random() * BUILDING_FLOOR_BASE_COLORS.length),
       columnColor: Math.floor(Math.random() * COLUMN_COLORS.length),
       wallColor: Math.floor(Math.random() * WALL_COLORS.length),
@@ -558,6 +564,7 @@ function setup(shaders) {
         posZ: helicopterPosZ,
         startTime: time,
         speed: helicopterSpeed,
+        speedY: 0.0,
         angle: helicopterAngleY,
       });
     } 
@@ -567,6 +574,7 @@ function setup(shaders) {
     Este método desenha uma das partes moviveis da helice
   */
   function helicePart() {
+    selectColor(HELICE_PART_COLOR);
     multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z]);
 
     uploadModelView();
@@ -577,6 +585,7 @@ function setup(shaders) {
     Este método desenha o cilindro que conecta as partes moviveis da helice ao body.
   */
   function heliceConect() {
+        selectColor(HELICE_CONECT_COLOR);
     multScale([
       HELICE_CONECT_DIAMETER,
       HELICE_CONECT_HIGH,
@@ -593,8 +602,8 @@ function setup(shaders) {
   function rotHelice() {
     for (let i = 0; i < 360; i += 360 / HELICE_NUM) {
       pushMatrix();
-      multRotationY(heliceShowSpeed * time + i);
-      multTranslation([HELICE_DIAMETER / 2, 0, 0]);
+      multRotationY(heliceSpeed * time + i);
+      multTranslation([HELICE_DIAMETER / 2.0, 0, 0]);
       helicePart();
       popMatrix();
     }
@@ -604,11 +613,9 @@ function setup(shaders) {
   */
   function helice() {
     pushMatrix();
-    selectColor(vec3(255.0, 255.0, 0.0));
     heliceConect();
     popMatrix();
     pushMatrix();
-    selectColor(vec3(0.0, 0.0, 255.0));
     rotHelice();
     popMatrix();
   }
@@ -617,6 +624,7 @@ function setup(shaders) {
     Este método cria o obejto que conecta a cauda (zona da helice) do helicoptero e o body
   */
   function tailConnector() {
+    selectColor(TAIL_MAIN_CONECT_COLOR);
     multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z]);
 
     uploadModelView();
@@ -627,6 +635,7 @@ function setup(shaders) {
     Este método cria a cauda do helicoptero/zona onde está situada a helice mais pequena
   */
   function tailEnd() {
+    selectColor(TAIL_END_COLOR);
     multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z]);
 
     uploadModelView();
@@ -653,7 +662,6 @@ function setup(shaders) {
     Este método desenha a cauda completa
   */
   function tail() {
-    selectColor(vec3(255.0, 0.0, 0.0));
     pushMatrix();
       tailConnector();
     popMatrix();
@@ -669,7 +677,7 @@ function setup(shaders) {
   function body() {
     multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
 
-    selectColor(vec3(255.0, 0.0, 0.0));
+    selectColor(BODY_COLOR);
     uploadModelView();
 
     SPHERE.draw(gl, program, mode);
@@ -680,6 +688,7 @@ function setup(shaders) {
   */
 
   function legConect() {
+    selectColor(LEG_CONECT_COLOR);
     multRotationZ(LEG_ANGLE_Z);
     multRotationY(LEG_ANGLE_Y);
 
@@ -694,6 +703,7 @@ function setup(shaders) {
     Este método desenha o pé, ou seja, a zona mais abaixo do helicoptero
   */
   function feetEnd() {
+    selectColor(FEET_END_COLOR);
     multScale([FEET_X, FEET_Y, FEET_Z]);
 
     uploadModelView();
@@ -729,7 +739,6 @@ function setup(shaders) {
   */
 
   function feet() {
-    selectColor(vec3(255.0, 255.0, 0.0));
     pushMatrix();
     multTranslation([-BODY_SIZE_X / 4.0, 0.0, 0.0]);
     oneLeg();
@@ -802,8 +811,7 @@ function setup(shaders) {
     SPHERE.draw(gl, program, mode);
   }
 
-  function crate(cratePosX, cratePosY, cratePosZ) {
-    multTranslation([cratePosX, cratePosY, cratePosZ]);
+  function crate() {
     multScale([CRATE_SIZE, CRATE_SIZE, CRATE_SIZE]);
     selectColor(BOX_COLOR);
     uploadModelView();
@@ -862,7 +870,8 @@ function setup(shaders) {
     for (let crateObj of crateInstances) {
       pushMatrix();
       moveCrate(crateObj);
-      crate(crateObj.posX, crateObj.posY, crateObj.posZ);
+      multTranslation([crateObj.posX, crateObj.posY +CRATE_SIZE/2.0, crateObj.posZ]);
+      crate();
       popMatrix();
     }
   }
@@ -1194,23 +1203,22 @@ function setup(shaders) {
   }
 
   function helicopterStillAnimation() {
-    let helicopterHigh = BODY_SIZE_Y / 2.0 +
-      (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
+
     if (
       isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
       helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
     ) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
       multRotationZ(WIND_RESISTANCE/10.0 * Math.sin(time * Math.PI));}
-    multTranslation([0, helicopterHigh, 0]);
+    multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
     multRotationZ(Math.sin(time * Math.PI));
   }
 
   function helicopterFlight() {
     helicopterPosCalcule();
-    if (isAutomaticAnimation && helicopterPosY != 0.0) {
+    if (isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosY)) {
       if (helicopterSpeed > 0) {
-        helicopterAngleY += helicopterSpeed * speed;
+        helicopterAngleY += 180.0*helicopterSpeed*speed/(AUTOMATIC_ANIMATION_RADIUS*Math.PI);
       }
       helicopterAutomaticCalcule();
     }
@@ -1227,12 +1235,10 @@ function setup(shaders) {
   }
 
   function helicopterSpeedCalcule() {
-    if (helicopterPosY <= getFloor(helicopterPosX,helicopterPosZ) && 0 < heliceSpeed) {
-      heliceSpeed -= heliceSpeed / 100.0;
-      heliceShowSpeed -= heliceShowSpeed / 70.0;
+    if (helicopterPosY <= getFloor(helicopterPosX,helicopterPosZ)) {
+      heliceSpeed -= heliceSpeed / 70.0;
       if (heliceSpeed < 0.03) {
-        heliceShowSpeed = 0;
-        heliceSpeed = 0;
+        heliceSpeed = 0.0;
       }
     }
     if (helicopterSpeed - WIND_RESISTANCE * speed >= 0.0) {
@@ -1240,25 +1246,9 @@ function setup(shaders) {
     } else {
       helicopterSpeed = 0.0;
     }
-
-    let toAddSpeed = GRAVITY * speed;
-    if (heliceSpeed - toAddSpeed > HELICE_FLYING_SPEED) {
-      heliceSpeed -= toAddSpeed;
-    }
   }
 
   function helicopterPosCalcule() {
-    let toAddY = (heliceSpeed - HELICE_FLYING_SPEED) / HELICE_FLYING_SPEED;
-    if (
-      isWithinWorldLimit(
-        helicopterPosX,
-        helicopterPosY + toAddY,
-        helicopterPosZ,
-      )
-    ) {
-      helicopterPosY += toAddY;
-    }
-
     let toAddZ = helicopterSpeed * speed *
       Math.cos(helicopterAngleY * Math.PI / 180);
     if (
@@ -1285,6 +1275,34 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
+    crate.speed -= WIND_RESISTANCE*speed;
+    crate.speedY -= GRAVITY*speed;
+    
+    let newX = crate.posX + crate.speed * Math.cos(helicopterAngleY*Math.PI/180.0)*speed;
+
+    let newZ = crate.posZ + crate.speed * Math.sin(helicopterAngleY*Math.PI/180.0)*speed;
+
+    let newY = crate.posY + crate.speedY*speed;
+
+    console.log("Speed : " + crate.speed);
+
+    let floor = getFloor(newX,newZ);
+    if(crate.posY != getFloor(crate.posX,crate.posZ)){
+    if(isWithinWorldLimit(newX,crate.posY,crate.posZ)){
+      crate.posX = newX;
+      console.log("X updated");
+    }
+    if(isWithinWorldLimit(newX,crate.posY,newZ)){
+      crate.posZ = newZ;
+      console.log("Z updated");
+    }
+    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && floor>WORLD_Y_LOWER_LIMIT)){
+      crate.posY = newY;
+    }else{
+      crate.posY = floor;
+    }
+  }
+/*
     let newY = crate.posY -
       GRAVITY * GRAVITY * speed / 2;
     let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
@@ -1302,7 +1320,7 @@ function setup(shaders) {
       else{
         crate.posY = CRATE_SIZE / 2.0 + floor;
       }
-    }
+    }*/
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
     }
@@ -1347,7 +1365,7 @@ function setup(shaders) {
 
     if(viewMode == BOTTOM_VIEW_MODE){
       let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
-      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosY], [1, 0, 0]);
+      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
     }
 
     if (hasToRestart) {
