@@ -2,6 +2,7 @@ precision highp float;
 uniform mat4 mModelView;
 uniform mat4 mProjection;
 uniform vec3 uColor;
+uniform float uLightAngle;
 
 attribute vec4 vPosition;
 attribute vec3 vNormal;
@@ -39,7 +40,6 @@ void main() {
     {
     toAdd = randN * (minVar-maxVar)+maxVar;
     }
-
     //va2 == 0 dir e opost
     //var2 == 1 esq
     //var1 == 0 todo o lado
@@ -54,10 +54,19 @@ void main() {
             frente: (var0 == 0 && var2 ==1) || (var2 == 0 && var0 !=0)
             esq-tras: 
             dir-tras:
-    */
+    *//*
     if(vNormal[0] != 1.0 && vNormal[2] != 1.0 && vNormal[1] != 1.0){
-        toAdd = -3.0*toAdd;
+        toAdd = s-3.0*toAdd;
     }
+    */
+    if(uLightAngle<180.0){
+        toAdd *=3.0*(vNormal[2])*(vNormal[0])*sin(radians(uLightAngle+90.0));;
+    }else{
+        //primeira parte da rotacao
+         toAdd *= 2.7*(vNormal[2]-1.0)*(vNormal[0])*sin(radians(uLightAngle+90.0));
+    }
+    
+    
     vec3 newColor = vec3(uColor[0]+toAdd,uColor[1]+toAdd,uColor[2]+toAdd);
 
     fColor = newColor;

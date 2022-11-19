@@ -97,6 +97,7 @@ const WORLD_Z_LOWER_LIMIT = -100.0;
 //Estes valores foram adaptados de acordo com alguns testes
 const GRAVITY = 9.8; // m/s^2
 const WIND_RESISTANCE = 0.5; // m/s^2
+let sunAngle = 0.0; //em relacao ao x
 
 //Helicopter movement
 let helicopterSpeed = 0.0;
@@ -571,6 +572,13 @@ function setup(shaders) {
     } 
   }
 
+  function Sun(){
+    multScale([10.0, 10.0, 10.0]);
+    selectColor(vec3(249.0, 201.0, 76.0));
+    uploadModelView();
+    SPHERE.draw(gl, program, mode);
+  }
+
   /*
     Este método desenha uma das partes moviveis da helice
   */
@@ -791,7 +799,10 @@ function setup(shaders) {
   function selectColor(color){
     let floorColor = vec3(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0);
     const uColor = gl.getUniformLocation(program, "uColor");
+    const uLightAngle = gl.getUniformLocation(program,"uLightAngle");
     gl.useProgram(program);
+    gl.uniform1f(uLightAngle,sunAngle%360);
+    console.log(sunAngle%360);
     gl.uniform3fv(uColor, flatten(floorColor));
   }
 
@@ -864,6 +875,13 @@ function setup(shaders) {
         HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
       );
       helicopter();
+    popMatrix();
+    pushMatrix();
+    multRotationZ(sunAngle);
+    multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
+    sunAngle+=10.0*speed;
+    console.log("Angulo " + sunAngle);
+    Sun();
     popMatrix();
     //pushMatrix();
     //centerSphere();
