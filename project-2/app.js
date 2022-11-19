@@ -1278,13 +1278,11 @@ function setup(shaders) {
     crate.speed -= WIND_RESISTANCE*speed;
     crate.speedY -= GRAVITY*speed;
     
-    let newX = crate.posX + crate.speed * Math.cos(helicopterAngleY*Math.PI/180.0)*speed;
+    let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
-    let newZ = crate.posZ + crate.speed * Math.sin(helicopterAngleY*Math.PI/180.0)*speed;
+    let newZ = crate.posZ + crate.speed * Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
     let newY = crate.posY + crate.speedY*speed;
-
-    console.log("Speed : " + crate.speed);
 
     let floor = getFloor(newX,newZ);
     if(crate.posY != getFloor(crate.posX,crate.posZ)){
