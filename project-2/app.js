@@ -81,8 +81,9 @@ let verticalDirection = 0.0;
 //Crate
 
 let crateInstances = [];
-const CRATE_DESPAWN_TIME = 2.0;
+const CRATE_DESPAWN_TIME = 5.0;
 const CRATE_SIZE = 3.5;
+const CRATE_MASS = 7.0;
 
 //World Limits and forces
 const WORLD_X_UPPER_LIMIT = 100.0;
@@ -94,19 +95,20 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-const GRAVITY = 29.8; // m/s^2
-const WIND_RESISTANCE = 10.0; // m/s^2
+const GRAVITY = 9.8; // m/s^2
+const WIND_RESISTANCE = 0.5; // m/s^2
 
 //Helicopter movement
 let helicopterSpeed = 0.0;
 let helicopterAngleY = 0.0;
-const AUTOMATIC_ANIMATION_RADIUS = 50.0;
+const AUTOMATIC_ANIMATION_RADIUS = 70.0;
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
-const HELICOPTER_INIT_Y = 0.0;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
-const HELICOPTER_MAX_SPEED = 30;
+const HELICOPTER_INIT_Y = 0.0;
+const HELICOPTER_MAX_SPEED = 200;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
+const HELICOPTER_ACCELERATION = 1.6;
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
 let helicopterPosZ = HELICOPTER_INIT_Z;
@@ -121,7 +123,6 @@ const HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
 //All helices
 let heliceSpeed = 0;
 const HELICE_FLYING_SPEED = 1300;
-const HELICE_MAX_SPEED = 1500;
 const HELICE_NUM = 3;
 
 //Helice connector
@@ -161,6 +162,7 @@ const FEET_Z = BODY_SIZE_Z;
 const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
+const HELICOPTER_MASS = 100.0;
 const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
 
 
@@ -351,7 +353,7 @@ function setup(shaders) {
       if(keys["r"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
             if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
-              helicopterSpeed++;
+              helicopterSpeed+= HELICOPTER_ACCELERATION;
             }
           }
         }
@@ -404,8 +406,7 @@ function setup(shaders) {
           isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
           helicopterSpeed < HELICOPTER_MAX_SPEED
         ) {
-          helicopterSpeed += speed * speed * (HELICOPTER_ANGLE_CHANGE) *
-            (HELICOPTER_ANGLE_CHANGE) * AUTOMATIC_ANIMATION_RADIUS;
+          helicopterSpeed += HELICOPTER_ACCELERATION;
         }
         }
       if(keys["q"]){
@@ -1241,8 +1242,8 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    if (helicopterSpeed - WIND_RESISTANCE * speed >= 0.0) {
-      helicopterSpeed -= WIND_RESISTANCE * speed;
+    if (helicopterSpeed - WIND_RESISTANCE *HELICOPTER_MASS *speed >= 0.0) {
+      helicopterSpeed -= WIND_RESISTANCE * HELICOPTER_MASS*speed;
     } else {
       helicopterSpeed = 0.0;
     }
@@ -1272,11 +1273,14 @@ function setup(shaders) {
     ) {
       helicopterPosX += toAddX;
     }
+    if(heliceSpeed == 0.0){
+      helicopterPosY = getFloor(helicopterPosX,helicopterPosZ)
+    }
   }
 
   function moveCrate(crate) {
-    crate.speed -= WIND_RESISTANCE*speed;
-    crate.speedY -= GRAVITY*speed;
+    crate.speed -= WIND_RESISTANCE*CRATE_MASS*speed;
+    crate.speedY -= GRAVITY*CRATE_MASS*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
@@ -1288,11 +1292,9 @@ function setup(shaders) {
     if(crate.posY != getFloor(crate.posX,crate.posZ)){
     if(isWithinWorldLimit(newX,crate.posY,crate.posZ)){
       crate.posX = newX;
-      console.log("X updated");
     }
     if(isWithinWorldLimit(newX,crate.posY,newZ)){
       crate.posZ = newZ;
-      console.log("Z updated");
     }
     if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && floor>WORLD_Y_LOWER_LIMIT)){
       crate.posY = newY;
@@ -1334,7 +1336,7 @@ function setup(shaders) {
     //console.log("Helice speed = " + heliceSpeed);
     //console.log("Inclinação d helic = " + helicopterAngleY);
     //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
-    //console.log("Speed = " + helicopterSpeed);
+    console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
