@@ -802,7 +802,6 @@ function setup(shaders) {
     const uLightAngle = gl.getUniformLocation(program,"uLightAngle");
     gl.useProgram(program);
     gl.uniform1f(uLightAngle,sunAngle%360);
-    console.log(sunAngle%360);
     gl.uniform3fv(uColor, flatten(floorColor));
   }
 
@@ -880,7 +879,6 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
-    console.log("Angulo " + sunAngle);
     Sun();
     popMatrix();
     //pushMatrix();
@@ -1234,24 +1232,27 @@ function setup(shaders) {
   }
 
   function helicopterFlight() {
-    helicopterPosCalcule();
     if (isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosY)) {
-      if (helicopterSpeed > 0) {
-        helicopterAngleY += 180.0*helicopterSpeed*speed/(AUTOMATIC_ANIMATION_RADIUS*Math.PI);
-      }
       helicopterAutomaticCalcule();
+    }else{
+      helicopterPosCalcule();
     }
     helicopterSpeedCalcule();
   }
 
   function helicopterAutomaticCalcule() {
-    helicopterPosX =
-      Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) *
-      AUTOMATIC_ANIMATION_RADIUS;
-    helicopterPosZ =
-      Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) *
-      AUTOMATIC_ANIMATION_RADIUS;
+    let newAngle = helicopterAngleY;
+    if (helicopterSpeed > 0) {
+      newAngle += 180.0*helicopterSpeed*speed/(AUTOMATIC_ANIMATION_RADIUS*Math.PI);
+    }
+    let newX = Math.sin(newAngle * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
+    let newZ = Math.cos(newAngle * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
+    if(isWithinWorldLimit(newX,helicopterPosY,newZ)){
+    helicopterPosX = newX;
+    helicopterPosZ = newZ;
+    helicopterAngleY = newAngle;
   }
+}
 
   function helicopterSpeedCalcule() {
     if (helicopterPosY <= getFloor(helicopterPosX,helicopterPosZ)) {
