@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { perspective } from "./libs/MV.js";
+import { mult, perspective, rotateY } from "./libs/MV.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -72,7 +72,8 @@ const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
 const CENTER_VIEW_MODE = "centerView";
-const DEFAULT_VIEW_MODE = "defaultView"
+const DEFAULT_VIEW_MODE = "defaultView";
+const HELICOPTER_VIEW_MODE = "helicopterView";
 let viewMode = DEFAULT_VIEW_MODE;
 
 let horizontalDirection = 0.0;
@@ -335,6 +336,10 @@ function setup(shaders) {
         viewMode = BOTTOM_VIEW_MODE;
         keys["7"] = false;
       }
+      if(keys["8"]){
+        viewMode = HELICOPTER_VIEW_MODE;
+        keys["8"] = false;
+      }
       if(keys["j"]){
           horizontalDirection += CAMERA_ANGLE_CHANGE;
         }
@@ -445,6 +450,7 @@ function setup(shaders) {
         break;
       case CENTER_VIEW_MODE:
       case DEFAULT_VIEW_MODE:
+      case HELICOPTER_VIEW_MODE:
         mProjection = ortho(
           -VP_DISTANCE * aspect,
           VP_DISTANCE * aspect,
@@ -1385,6 +1391,13 @@ function setup(shaders) {
     if(viewMode == BOTTOM_VIEW_MODE){
       let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
       view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+    }
+
+    if(viewMode == HELICOPTER_VIEW_MODE){
+
+      view = lookAt([helicopterPosX,helicopterPosY,helicopterPosZ],[helicopterPosX,helicopterPosY,helicopterPosZ+1.0],[0,1,0]);
+      let rotY = rotateY(-helicopterAngleY);
+      view = mult(rotY,view);
     }
 
     if (hasToRestart) {
