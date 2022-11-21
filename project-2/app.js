@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY } from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2 } from "./libs/MV.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
@@ -86,8 +86,10 @@ let verticalDirection = 0.0;
 
 let crateInstances = [];
 const CRATE_DESPAWN_TIME = 5.0;
+let lastCrateSpawnTime = -CRATE_DESPAWN_TIME;
 const CRATE_SIZE = 3.5;
-const CRATE_MASS = 7.0;
+const CRATE_MASS = 3.0;
+const CRATE_STOPPING_SCALE = 42.0;
 
 //World Limits and forces
 const WORLD_X_UPPER_LIMIT = 100.0;
@@ -100,7 +102,7 @@ const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
 const GRAVITY = 9.8; // m/s^2
-const WIND_RESISTANCE = 0.5; // m/s^2
+const WIND_RESISTANCE = 7.0; // N
 let sunAngle = 0.0; //em relacao ao x
 
 //Helicopter movement
@@ -114,6 +116,7 @@ const HELICOPTER_MAX_SPEED = 200;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
 const HELICOPTER_ACCELERATION = 1.6;
+const HELICOPTER_STOPPING_SCALE = 60.0;
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
 let helicopterPosZ = HELICOPTER_INIT_Z;
@@ -167,7 +170,7 @@ const FEET_Z = BODY_SIZE_Z;
 const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
-const HELICOPTER_MASS = 100.0;
+const HELICOPTER_MASS = 10.0;
 const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
 
 
@@ -441,7 +444,7 @@ function setup(shaders) {
           keys["z"] = false;
         }
       if(keys[" "]){
-        if(isCrateAlowed(helicopterPosX,helicopterPosZ)){
+        if(isCrateAlowed()){
           spawnCrate();}
           keys[" "] = false;
         }
@@ -474,6 +477,14 @@ function setup(shaders) {
         break;
       default:
     }
+  }
+
+  function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
+    let crateFloorTime = posY/(GRAVITY*CRATE_STOPPING_SCALE);
+    let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
+    let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
+    let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
+    return vec2(crateEndX,crateEndZ);
   }
 
   function resize_canvas() {
@@ -530,12 +541,17 @@ function setup(shaders) {
     return ret;
   }
 
-  function isCrateAlowed(x,z){
+  function isCrateAlowed(){
+    let endCrate = getEndPosCrate(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
     for (let i = 0; i<crateInstances.length;i++){ 
       let crateObj = crateInstances[i];
-      let isXInside = crateObj.posX + CRATE_SIZE/2.0>x && crateObj.posX - CRATE_SIZE/2.0<x;
-      let isZInside = crateObj.posZ + CRATE_SIZE/2.0>z && crateObj.posZ - CRATE_SIZE/2.0<z;
+      let otherC = getEndPosCrate(crateObj.posX0,crateObj.posY0,crateObj.posZ0,crateObj.speed0,crateObj.angle);
+      console.log(i);
+      let isXInside = otherC[0] + CRATE_SIZE>endCrate[0] && otherC[0] - CRATE_SIZE<endCrate[0];
+      let isZInside = otherC[1] + CRATE_SIZE>endCrate[1] && otherC[1] - CRATE_SIZE<endCrate[1];
 
+      console.log(isXInside);
+      console.log(isZInside);
         if(isXInside && isZInside){
           return false;
         }
@@ -577,13 +593,18 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
+    lastCrateSpawnTime = time;
     if(getFloor(helicopterPosX, helicopterPosZ) < helicopterPosY){
       crateInstances.push({
         posX: helicopterPosX,
         posY: helicopterPosY,
         posZ: helicopterPosZ,
+        posX0: helicopterPosX,
+        posY0: helicopterPosY,
+        posZ0: helicopterPosZ,
         startTime: time,
         speed: helicopterSpeed,
+        speed0: helicopterSpeed,
         speedY: 0.0,
         angle: helicopterAngleY,
       });
@@ -1279,8 +1300,9 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    if (helicopterSpeed - ADJUSTABLE_VARS.wind_resistance *HELICOPTER_MASS *speed >= 0.0) {
-      helicopterSpeed -= ADJUSTABLE_VARS.wind_resistance * HELICOPTER_MASS*speed;
+    let toAddSpeed = - WIND_RESISTANCE*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
+    if (helicopterSpeed + toAddSpeed >= 0.0) {
+      helicopterSpeed += toAddSpeed;
     } else {
       helicopterSpeed = 0.0;
     }
@@ -1316,8 +1338,8 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    crate.speed -= ADJUSTABLE_VARS.wind_resistance*CRATE_MASS*speed;
-    crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_MASS*speed;
+    crate.speed -= WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
+    crate.speedY -= GRAVITY*CRATE_STOPPING_SCALE*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
@@ -1339,25 +1361,6 @@ function setup(shaders) {
       crate.posY = floor;
     }
   }
-/*
-    let newY = crate.posY -
-      ADJUSTABLE_VARS.gravity * ADJUSTABLE_VARS.gravity * speed / 2;
-    let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
-    let newZ = crate.posZ + Math.cos(crate.angle * Math.PI / 180) * crate.speed * speed;
-    let floor = getFloor(newX,newZ);
-    if(newY < CRATE_SIZE / 2.0){newY = CRATE_SIZE/2.0}
-    if (isWithinWorldLimit(newX, newY - CRATE_SIZE / 2.0, crate.posZ) && crate.posY > CRATE_SIZE / 2.0 + floor) {
-      crate.posY = newY;
-      crate.posX = newX;
-      crate.posZ = newZ;
-    } else{
-      if(CRATE_SIZE/2.0 + floor > crate.posY){
-        crate.posY = newY;
-      }
-      else{
-        crate.posY = CRATE_SIZE / 2.0 + floor;
-      }
-    }*/
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
     }
