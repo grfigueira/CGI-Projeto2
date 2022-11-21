@@ -69,7 +69,7 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5};
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: true};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -275,13 +275,13 @@ function setup(shaders) {
 
   mode = gl.LINES;
 
-  // ------ Testing GUI --------
-  let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0);
-  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 20.0);
-  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0);
+  // GUI Controllers
+  GUI.width = 260;
+  let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
+  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 20.0).name('Gravity');
+  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
+  let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
   
-  
-  // ---------------------------
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
@@ -923,7 +923,7 @@ function setup(shaders) {
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
     console.log("Sun angle: ", sunAngle % 360.0);
-    if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0){
+    if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
     }
     else{
@@ -1352,9 +1352,9 @@ function setup(shaders) {
     crate.speed -= WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
     crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE*speed;
     
-    let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
+    let newX = crate.posX + crate.speed * -Math.cos((crate.angle+90.0)*Math.PI/180.0)*speed;
 
-    let newZ = crate.posZ + crate.speed * Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
+    let newZ = crate.posZ + crate.speed * Math.sin((crate.angle+90.0)*Math.PI/180.0)*speed;
 
     let newY = crate.posY + crate.speedY*speed;
 
