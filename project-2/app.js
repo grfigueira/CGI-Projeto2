@@ -54,6 +54,7 @@ import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
 import { mult, perspective, rotateY } from "./libs/MV.js";
+import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -68,12 +69,14 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
 const CENTER_VIEW_MODE = "centerView";
 const DEFAULT_VIEW_MODE = "defaultView";
 const HELICOPTER_VIEW_MODE = "helicopterView";
+const GUI = new dat.GUI({name: 'My GUI'});
 let viewMode = DEFAULT_VIEW_MODE;
 
 let horizontalDirection = 0.0;
@@ -229,13 +232,13 @@ const LEG_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
 const FEET_END_COLOR = vec3(255.0, 255.0, 0.0);
 
 const axonotricView = lookAt(
-  [VP_DISTANCE, VP_DISTANCE, VP_DISTANCE],
+  [ADJUSTABLE_VARS.vp_distance, ADJUSTABLE_VARS.vp_distance, ADJUSTABLE_VARS.vp_distance],
   [0, 0, 0],
   [0, 1, 0],
 );
-const XZview = lookAt([0, VP_DISTANCE, 0], [0, 0, 0], [0, 0, 1]); //olhar de cima para baixo
-const ZYview = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x para o centro
-const XYview = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]); //olhar do z para o centro
+const XZview = lookAt([0, ADJUSTABLE_VARS.vp_distance, 0], [0, 0, 0], [0, 0, 1]); //olhar de cima para baixo
+const ZYview = lookAt([ADJUSTABLE_VARS.vp_distance, 0, 0], [0, 0, 0], [0, 1, 0]); //olhar do x para o centro
+const XYview = lookAt([0, 0, ADJUSTABLE_VARS.vp_distance], [0, 0, 0], [0, 1, 0]); //olhar do z para o centro
 
 let view = axonotricView;
 let keys = {}; // Map that stores whether each key is pressed or not
@@ -254,16 +257,24 @@ function setup(shaders) {
   );
 
   let mProjection = ortho(
-    -VP_DISTANCE * aspect,
-    VP_DISTANCE * aspect,
-    -VP_DISTANCE,
-    VP_DISTANCE,
-    -3 * VP_DISTANCE,
-    3 * VP_DISTANCE,
+    -ADJUSTABLE_VARS.vp_distance * aspect,
+    ADJUSTABLE_VARS.vp_distance * aspect,
+    -ADJUSTABLE_VARS.vp_distance,
+    ADJUSTABLE_VARS.vp_distance,
+    -3 * ADJUSTABLE_VARS.vp_distance,
+    3 * ADJUSTABLE_VARS.vp_distance,
   );
 
 
   mode = gl.LINES;
+
+  // ------ Testing GUI --------
+  let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0);
+  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 20.0);
+  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0);
+  
+  
+  // ---------------------------
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
@@ -416,11 +427,11 @@ function setup(shaders) {
         }
         }
       if(keys["q"]){
-          VP_DISTANCE--;
+          ADJUSTABLE_VARS.vp_distance--;
           keys["q"] = false;
         }
       if(keys["a"]){
-          VP_DISTANCE++;
+          ADJUSTABLE_VARS.vp_distance++;
           keys["a"] = false;
         }
       if(keys["z"]){
@@ -449,15 +460,16 @@ function setup(shaders) {
         updateFirstPerson();
         break;
       case CENTER_VIEW_MODE:
+          
       case DEFAULT_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
         mProjection = ortho(
-          -VP_DISTANCE * aspect,
-          VP_DISTANCE * aspect,
-          -VP_DISTANCE,
-          VP_DISTANCE,
-          -3 * VP_DISTANCE,
-          3 * VP_DISTANCE,
+          -ADJUSTABLE_VARS.vp_distance * aspect,
+          ADJUSTABLE_VARS.vp_distance * aspect,
+          -ADJUSTABLE_VARS.vp_distance,
+          ADJUSTABLE_VARS.vp_distance,
+          -3 * ADJUSTABLE_VARS.vp_distance,
+          3 * ADJUSTABLE_VARS.vp_distance,
         );
         break;
       default:
@@ -498,7 +510,7 @@ function setup(shaders) {
       90.0,
       aspect,
       BODY_SIZE_Z,
-      3*VP_DISTANCE,
+      3*ADJUSTABLE_VARS.vp_distance,
     );
   }
 
@@ -867,7 +879,7 @@ function setup(shaders) {
       addBuilding(28.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-70.0,BUILDING_FLOOR_HIGH/2.0,30.0);
+      addBuilding(-80.0,BUILDING_FLOOR_HIGH/2.0,-30.0); // TODO Colliding building
     popMatrix();
     currBuilding=0;
 
@@ -1232,7 +1244,7 @@ function setup(shaders) {
       helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
     ) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
-      multRotationZ(WIND_RESISTANCE/10.0 * Math.sin(time * Math.PI));}
+      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));}
     multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
     multRotationZ(Math.sin(time * Math.PI));
   }
@@ -1267,8 +1279,8 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    if (helicopterSpeed - WIND_RESISTANCE *HELICOPTER_MASS *speed >= 0.0) {
-      helicopterSpeed -= WIND_RESISTANCE * HELICOPTER_MASS*speed;
+    if (helicopterSpeed - ADJUSTABLE_VARS.wind_resistance *HELICOPTER_MASS *speed >= 0.0) {
+      helicopterSpeed -= ADJUSTABLE_VARS.wind_resistance * HELICOPTER_MASS*speed;
     } else {
       helicopterSpeed = 0.0;
     }
@@ -1304,8 +1316,8 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    crate.speed -= WIND_RESISTANCE*CRATE_MASS*speed;
-    crate.speedY -= GRAVITY*CRATE_MASS*speed;
+    crate.speed -= ADJUSTABLE_VARS.wind_resistance*CRATE_MASS*speed;
+    crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_MASS*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
@@ -1329,7 +1341,7 @@ function setup(shaders) {
   }
 /*
     let newY = crate.posY -
-      GRAVITY * GRAVITY * speed / 2;
+      ADJUSTABLE_VARS.gravity * ADJUSTABLE_VARS.gravity * speed / 2;
     let newX = crate.posX +  Math.sin(crate.angle * Math.PI / 180) * crate.speed * speed;
     let newZ = crate.posZ + Math.cos(crate.angle * Math.PI / 180) * crate.speed * speed;
     let floor = getFloor(newX,newZ);
