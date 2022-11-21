@@ -233,6 +233,10 @@ const TAIL_MAIN_CONECT_COLOR = vec3(255.0, 0.0, 0.0);
 const BODY_COLOR = vec3(255.0, 0.0, 0.0);
 const LEG_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
 const FEET_END_COLOR = vec3(255.0, 255.0, 0.0);
+const NIGHT_COLOR = vec3(36, 22, 107);
+const DAY_COLOR = vec3(204.0 , 151.0 , 142.0);
+
+let backgroundColor = DAY_COLOR;
 
 const axonotricView = lookAt(
   [ADJUSTABLE_VARS.vp_distance, ADJUSTABLE_VARS.vp_distance, ADJUSTABLE_VARS.vp_distance],
@@ -291,7 +295,7 @@ function setup(shaders) {
     keys[event.key] = false; // Key no longer pressed
   });
 
-  gl.clearColor(204.0 / 255.0, 151.0 / 255.0, 142.0 / 255.0, 1.0); // Background cinzento
+  gl.clearColor(backgroundColor[0] / 255.0, backgroundColor[1] / 255.0, backgroundColor[2] / 255.0, 1.0); // Background cinzento
   SPHERE.init(gl);
   CYLINDER.init(gl);
   CUBE.init(gl);
@@ -480,7 +484,7 @@ function setup(shaders) {
   }
 
   function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
-    let crateFloorTime = posY/(GRAVITY*CRATE_STOPPING_SCALE);
+    let crateFloorTime = posY/(ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE);
     let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
     let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
@@ -900,7 +904,7 @@ function setup(shaders) {
       addBuilding(28.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-80.0,BUILDING_FLOOR_HIGH/2.0,-30.0); // TODO Colliding building
+      addBuilding(-80.0,BUILDING_FLOOR_HIGH/2.0,-30.0); 
     popMatrix();
     currBuilding=0;
 
@@ -918,6 +922,13 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
+    console.log("Sun angle: ", sunAngle % 360.0);
+    if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0){
+      gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
+    }
+    else{
+      gl.clearColor(DAY_COLOR[0] / 255.0, DAY_COLOR[1] / 255.0, DAY_COLOR[2] / 255.0, 1.0); 
+    }
     Sun();
     popMatrix();
     //pushMatrix();
@@ -1339,7 +1350,7 @@ function setup(shaders) {
 
   function moveCrate(crate) {
     crate.speed -= WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
-    crate.speedY -= GRAVITY*CRATE_STOPPING_SCALE*speed;
+    crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)*speed;
 
