@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY } from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2 } from "./libs/MV.js";
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -433,11 +433,7 @@ function setup(shaders) {
           keys["z"] = false;
         }
       if(keys[" "]){
-        let crateFloorTime = Math.sqrt(helicopterPosY/(GRAVITY*CRATE_STOPPING_SCALE));
-        let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime*crateFloorTime;
-        let crateEndX = helicopterPosX + (helicopterSpeed-accCalcule)*-Math.cos((helicopterAngleY+90.0)*Math.PI/180.0);
-        let crateEndZ = helicopterPosZ + (helicopterSpeed-accCalcule)*Math.sin((helicopterAngleY+90.0)*Math.PI/180.0);
-        if(isCrateAlowed(crateEndX,crateEndZ) && lastCrateSpawnTime + CRATE_DESPAWN_TIME < time){
+        if(isCrateAlowed()){
           spawnCrate();}
           keys[" "] = false;
         }
@@ -469,6 +465,14 @@ function setup(shaders) {
         break;
       default:
     }
+  }
+
+  function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
+    let crateFloorTime = posY/(GRAVITY*CRATE_STOPPING_SCALE);
+    let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
+    let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
+    let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
+    return vec2(crateEndX,crateEndZ);
   }
 
   function resize_canvas() {
@@ -525,12 +529,17 @@ function setup(shaders) {
     return ret;
   }
 
-  function isCrateAlowed(x,z){
+  function isCrateAlowed(){
+    let endCrate = getEndPosCrate(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
     for (let i = 0; i<crateInstances.length;i++){ 
       let crateObj = crateInstances[i];
-      let isXInside = crateObj.posX + CRATE_SIZE/2.0>x && crateObj.posX - CRATE_SIZE/2.0<x;
-      let isZInside = crateObj.posZ + CRATE_SIZE/2.0>z && crateObj.posZ - CRATE_SIZE/2.0<z;
+      let otherC = getEndPosCrate(crateObj.posX0,crateObj.posY0,crateObj.posZ0,crateObj.speed0,crateObj.angle);
+      console.log(i);
+      let isXInside = otherC[0] + CRATE_SIZE>endCrate[0] && otherC[0] - CRATE_SIZE<endCrate[0];
+      let isZInside = otherC[1] + CRATE_SIZE>endCrate[1] && otherC[1] - CRATE_SIZE<endCrate[1];
 
+      console.log(isXInside);
+      console.log(isZInside);
         if(isXInside && isZInside){
           return false;
         }
@@ -578,8 +587,12 @@ function setup(shaders) {
         posX: helicopterPosX,
         posY: helicopterPosY,
         posZ: helicopterPosZ,
+        posX0: helicopterPosX,
+        posY0: helicopterPosY,
+        posZ0: helicopterPosZ,
         startTime: time,
         speed: helicopterSpeed,
+        speed0: helicopterSpeed,
         speedY: 0.0,
         angle: helicopterAngleY,
       });
