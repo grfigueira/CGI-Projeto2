@@ -86,7 +86,7 @@ let verticalDirection = 0.0;
 
 let crateInstances = [];
 const CRATE_DESPAWN_TIME = 5.0;
-let lastCrateSpawnTime = -CRATE_DESPAWN_TIME;
+const MAX_CRATE_NUM = 200;
 const CRATE_SIZE = 3.5;
 const CRATE_MASS = 3.0;
 const CRATE_STOPPING_SCALE = 42.0;
@@ -448,7 +448,7 @@ function setup(shaders) {
           keys["z"] = false;
         }
       if(keys[" "]){
-        if(isCrateAlowed()){
+        if(crateInstances.length<=MAX_CRATE_NUM && isCrateAlowed()){
           spawnCrate();}
           keys[" "] = false;
         }
@@ -489,6 +489,23 @@ function setup(shaders) {
     let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
     return vec2(crateEndX,crateEndZ);
+  }
+
+  function getEndPosCrateV2(){
+    let crate ={
+      posX: helicopterPosX,
+      posY: helicopterPosY,
+      posZ: helicopterPosZ,
+      startTime: time,
+      speed: helicopterSpeed,
+      speedY: 0.0,
+      angle: helicopterAngleY,
+    };
+    let endPos = vec3(WORLD_X_UPPER_LIMIT,WORLD_Y_UPPER_LIMIT,WORLD_Z_UPPER_LIMIT);
+    while(endPos[1]!=getFloor(endPos[0],endPos[2])){
+      endPos = moveCrate(crate);
+    }
+    return vec2(endPos[0],endPos[2]);
   }
 
   function resize_canvas() {
@@ -546,16 +563,13 @@ function setup(shaders) {
   }
 
   function isCrateAlowed(){
-    let endCrate = getEndPosCrate(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
+    let endCrate = getEndPosCrateV2(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
     for (let i = 0; i<crateInstances.length;i++){ 
       let crateObj = crateInstances[i];
-      let otherC = getEndPosCrate(crateObj.posX0,crateObj.posY0,crateObj.posZ0,crateObj.speed0,crateObj.angle);
-      console.log(i);
-      let isXInside = otherC[0] + CRATE_SIZE>endCrate[0] && otherC[0] - CRATE_SIZE<endCrate[0];
-      let isZInside = otherC[1] + CRATE_SIZE>endCrate[1] && otherC[1] - CRATE_SIZE<endCrate[1];
+      let isXInside = crateObj.endPosX + CRATE_SIZE>endCrate[0] && crateObj.endPosX - CRATE_SIZE<endCrate[0];
+      let isZInside = crateObj.endPosZ + CRATE_SIZE>endCrate[1] && crateObj.endPosZ - CRATE_SIZE<endCrate[1];
 
-      console.log(isXInside);
-      console.log(isZInside);
+      console.log(crateObj.endPosZ);
         if(isXInside && isZInside){
           return false;
         }
@@ -597,18 +611,16 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
-    lastCrateSpawnTime = time;
     if(getFloor(helicopterPosX, helicopterPosZ) < helicopterPosY){
+      let endPos = getEndPosCrateV2(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
       crateInstances.push({
+        endPosX: endPos[0],
+        endPosZ:endPos[1],
         posX: helicopterPosX,
         posY: helicopterPosY,
         posZ: helicopterPosZ,
-        posX0: helicopterPosX,
-        posY0: helicopterPosY,
-        posZ0: helicopterPosZ,
         startTime: time,
         speed: helicopterSpeed,
-        speed0: helicopterSpeed,
         speedY: 0.0,
         angle: helicopterAngleY,
       });
@@ -922,7 +934,6 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
-    console.log("Sun angle: ", sunAngle % 360.0);
     if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
     }
@@ -1289,6 +1300,10 @@ function setup(shaders) {
     }
     helicopterSpeedCalcule();
   }
+  /**
+   * Este método tem de ser obrigatoriamente feito (e não rodamos apenas o helicoptero no angulo dele) uma vez que temos
+   * de saber se ele vai colidir com um edificio. 
+   */
 
   function helicopterAutomaticCalcule() {
     let newAngle = helicopterAngleY;
@@ -1366,7 +1381,7 @@ function setup(shaders) {
     if(isWithinWorldLimit(newX,crate.posY,newZ)){
       crate.posZ = newZ;
     }
-    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && floor>WORLD_Y_LOWER_LIMIT)){
+    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && newY>WORLD_Y_LOWER_LIMIT)){
       crate.posY = newY;
     }else{
       crate.posY = floor;
@@ -1375,6 +1390,8 @@ function setup(shaders) {
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
     }
+
+    return vec3(crate.posX,crate.posY,crate.posZ);
   }
 
   function render() {
@@ -1387,7 +1404,7 @@ function setup(shaders) {
     //console.log("Helice speed = " + heliceSpeed);
     //console.log("Inclinação d helic = " + helicopterAngleY);
     //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
-    console.log("Speed = " + helicopterSpeed);
+    //console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
