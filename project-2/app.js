@@ -219,10 +219,12 @@ let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.
 let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0),vec3(138.0,109.0,104.0),vec3(107.0,30.0,10.0)];
 let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0),vec3(178.0,154.0,132.0),vec3(16.0,73.0,54.0)];
 
+const NIGHT_GRASS_COLOR = vec3(66.0,92.0,13.0);
+const DAY_GRASS_COLOR = vec3(100.0,139.0,20.0);
 
-const GRASS_COLOR = vec3(100.0,139.0,20.0);
-
-const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
+const DAY_WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
+//const NIGHT_WINDOW_GLASS_COLOR = vec3(153.0,246.0,255.0); //luz das janelas azul
+const NIGHT_WINDOW_GLASS_COLOR = vec3(255.0,255.0,255.0); //luz das janelas branca
 
 const BOX_COLOR = vec3(115, 79, 13);
 
@@ -233,7 +235,8 @@ const TAIL_MAIN_CONECT_COLOR = vec3(255.0, 0.0, 0.0);
 const BODY_COLOR = vec3(255.0, 0.0, 0.0);
 const LEG_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
 const FEET_END_COLOR = vec3(255.0, 255.0, 0.0);
-const NIGHT_COLOR = vec3(36, 22, 107);
+//const NIGHT_COLOR = vec3(36, 22, 107);
+const NIGHT_COLOR = vec3(11.0,17.0,29.0);
 const DAY_COLOR = vec3(204.0 , 151.0 , 142.0);
 
 let backgroundColor = DAY_COLOR;
@@ -887,11 +890,18 @@ function setup(shaders) {
   /*
     Desenha o mundo
   */
+  function isNightTime(){
+    return sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle;
+  }
 
   function world() {
     pushMatrix();
       multTranslation([0.0, -1.0, 0.0]);
-      floor(GRASS_COLOR);
+      if(isNightTime()){
+      floor(NIGHT_GRASS_COLOR);}
+      else{
+        floor(DAY_GRASS_COLOR);
+      }
     popMatrix();
     pushMatrix();
       multTranslation([-20.0, 0.0, -20.0]);
@@ -934,7 +944,7 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
-    if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle){
+    if(isNightTime()){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
     }
     else{
@@ -1147,7 +1157,11 @@ function setup(shaders) {
 
 
   function windowGlass(){
-    selectColor(WINDOW_GLASS_COLOR);
+    if(isNightTime()){
+    selectColor(NIGHT_WINDOW_GLASS_COLOR);
+    }else{
+      selectColor(DAY_WINDOW_GLASS_COLOR);
+    }
     multScale([WINDOW_LEN,WINDOW_HIGH,0.1]);
 
     uploadModelView();
