@@ -68,7 +68,6 @@ let isAutomaticAnimation = true;
 
 //VIEWCONST
 //View
-let VP_DISTANCE = 100.0;
 let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: true};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
@@ -101,22 +100,23 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-const GRAVITY = 9.8; // m/s^2
-const WIND_RESISTANCE = 7.0; // N
 let sunAngle = 0.0; //em relacao ao x
 
 //Helicopter movement
 let helicopterSpeed = 0.0;
 let helicopterAngleY = 0.0;
 const AUTOMATIC_ANIMATION_RADIUS = 70.0;
+
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Y = 0.0;
+
 const HELICOPTER_MAX_SPEED = 200;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
 const HELICOPTER_ACCELERATION = 1.6;
 const HELICOPTER_STOPPING_SCALE = 60.0;
+
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
 let helicopterPosZ = HELICOPTER_INIT_Z;
@@ -171,7 +171,7 @@ const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
 const HELICOPTER_MASS = 10.0;
-const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
+const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
 
 //Buildings
@@ -485,7 +485,7 @@ function setup(shaders) {
 
   function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
     let crateFloorTime = posY/(ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE);
-    let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
+    let accCalcule = ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
     let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
     return vec2(crateEndX,crateEndZ);
@@ -838,7 +838,7 @@ function setup(shaders) {
     multTranslation([
       0,
       -(BODY_SIZE_Y / 2.0 +
-        (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2),
+        (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / LEG_CONECT_X),
       0.0,
     ]);
     feet();
@@ -1281,15 +1281,17 @@ function setup(shaders) {
   }
 
   function helicopterStillAnimation() {
-
-    if (
-      isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
-      helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
-    ) {
+    let isMovable = isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
+    helicopterPosY != getFloor(helicopterPosX,helicopterPosZ);
+    if (isMovable) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
-      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));}
+      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));
+    }
     multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
-    multRotationZ(Math.sin(time * Math.PI));
+    if(isMovable){
+      multRotationZ(Math.sin(time * Math.PI));
+    }
+    
   }
 
   function helicopterFlight() {
@@ -1326,7 +1328,7 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    let toAddSpeed = - WIND_RESISTANCE*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
+    let toAddSpeed = - ADJUSTABLE_VARS.wind_resistance*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
     if (helicopterSpeed + toAddSpeed >= 0.0) {
       helicopterSpeed += toAddSpeed;
     } else {
@@ -1364,7 +1366,7 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    crate.speed -= WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
+    crate.speed -= ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
     crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((crate.angle+90.0)*Math.PI/180.0)*speed;
@@ -1396,15 +1398,6 @@ function setup(shaders) {
 
   function render() {
     updatePerspectivePerMode();
-    //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
-    //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
-    //console.log("helX = " + helicopterPosX);
-    //console.log("helY = " + helicopterPosY);
-    //console.log("helZ = "+ helicopterPosZ);
-    //console.log("Helice speed = " + heliceSpeed);
-    //console.log("Inclinação d helic = " + helicopterAngleY);
-    //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
-    //console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1415,32 +1408,27 @@ function setup(shaders) {
       false,
       flatten(mProjection),
     );
-    if (viewMode == CENTER_VIEW_MODE) {
-      view = lookAt([0, 0, 0], [
-        Math.sin(horizontalDirection),
-        Math.sin(verticalDirection),
-        Math.cos(horizontalDirection),
-      ], [0, 1, 0]);
-    }
-    if(viewMode == FIRST_PERSON_VIEW_MODE){
-      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
-      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [
-        -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosX,
-        cameraHigh,
-        Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosZ,
-      ], [0, 1, 0]);
-    }
 
-    if(viewMode == BOTTOM_VIEW_MODE){
-      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
-      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
-    }
-
-    if(viewMode == HELICOPTER_VIEW_MODE){
-
-      view = lookAt([helicopterPosX,helicopterPosY,helicopterPosZ],[helicopterPosX,helicopterPosY,helicopterPosZ+1.0],[0,1,0]);
-      let rotY = rotateY(-helicopterAngleY);
-      view = mult(rotY,view);
+    let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
+    switch(viewMode){
+      case CENTER_VIEW_MODE: 
+        view = lookAt([0, 0, 0], [Math.sin(horizontalDirection),Math.sin(verticalDirection),Math.cos(horizontalDirection),], [0, 1, 0]);
+      /**
+       *let cameRotY = rotateY(horizontalDirection);
+        let cameRotX = rotateX(verticalDirection);
+        let cameRotZ = rotateZ(verticalDirection);
+        view = mult(cameRotZ,mult(cameRotY, mult(cameRotX,view)));
+       */
+        break;
+      case FIRST_PERSON_VIEW_MODE:
+      case HELICOPTER_VIEW_MODE:
+        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0,], [0, 1, 0]);
+        let rotY = rotateY(-helicopterAngleY);
+        view = mult(rotY,view);
+      break;
+      case BOTTOM_VIEW_MODE:
+        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+      break;
     }
 
     if (hasToRestart) {
