@@ -226,7 +226,7 @@ const DAY_WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
 //const NIGHT_WINDOW_GLASS_COLOR = vec3(153.0,246.0,255.0); //luz das janelas azul
 const NIGHT_WINDOW_GLASS_COLOR = vec3(255.0,255.0,255.0); //luz das janelas branca
 
-const BOX_COLOR = vec3(115, 79, 13);
+const BOX_COLOR = vec3(177, 178, 255);
 
 const HELICE_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
 const HELICE_PART_COLOR = vec3(0.0, 0.0, 255.0);
@@ -386,7 +386,7 @@ function setup(shaders) {
         }
       if(keys["f"]){
         if (helicopterSpeed > 0.0) {
-          helicopterSpeed--;
+          helicopterSpeed = helicopterSpeed - ADJUSTABLE_VARS.helicopterScale;
         }
       }
       if(keys["d"]){
@@ -1385,8 +1385,13 @@ function setup(shaders) {
     if(isWithinWorldLimit(newX,crate.posY,newZ)){
       crate.posZ = newZ;
     }
-    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && newY>WORLD_Y_LOWER_LIMIT)){
-      crate.posY = newY;
+    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY)){
+      if(newY>WORLD_Y_LOWER_LIMIT){
+        crate.posY = newY; 
+      }
+      else{
+        crate.posY = CRATE_SIZE / 2.0;
+      }
     }else{
       crate.posY = floor;
     }
