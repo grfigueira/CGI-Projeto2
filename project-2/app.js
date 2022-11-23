@@ -116,10 +116,10 @@ const HELICOPTER_ACCELERATION = 1.6;
 const HELICOPTER_STOPPING_SCALE = 60.0;
 
 //Main Helice
-const HELICE_DIAMETER = 4;
-const HELICE_SIZE_X = HELICE_DIAMETER * 1.0;
-const HELICE_SIZE_Y = HELICE_DIAMETER * 1.0 / 30.0;
-const HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
+let HELICE_DIAMETER = 4 * ADJUSTABLE_VARS.helicopterScale;
+let HELICE_SIZE_X = HELICE_DIAMETER * 1.0;
+let HELICE_SIZE_Y = HELICE_DIAMETER * 1.0 / 30.0;
+let HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
 
 //All helices
 let heliceSpeed = 0;
@@ -127,48 +127,48 @@ const HELICE_FLYING_SPEED = 1300;
 const HELICE_NUM = 3;
 
 //Helice connector
-const HELICE_CONECT_DIAMETER = 0.3;
-const HELICE_CONECT_HIGH = 0.5;
+let HELICE_CONECT_DIAMETER = 0.3 * ADJUSTABLE_VARS.helicopterScale;
+let HELICE_CONECT_HIGH = 0.5 * ADJUSTABLE_VARS.helicopterScale;
 
 //Tail Main Connector
-const TAIL_MAIN_CONECT_DIAMETER = 4.0;
-const TAIL_MAIN_SIZE_X = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 18.0;
-const TAIL_MAIN_SIZE_Y = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 8.0;
-const TAIL_MAIN_SIZE_Z = TAIL_MAIN_CONECT_DIAMETER * 1.0;
+let TAIL_MAIN_CONECT_DIAMETER = 4.0 * ADJUSTABLE_VARS.helicopterScale;
+let TAIL_MAIN_SIZE_X = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 18.0;
+let TAIL_MAIN_SIZE_Y = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 8.0;
+let TAIL_MAIN_SIZE_Z = TAIL_MAIN_CONECT_DIAMETER * 1.0;
 
 //Tail End Connector
-const TAIL_END_DIAMETER = 1;
-const TAIL_END_SIZE_X = TAIL_END_DIAMETER * 1.0 / 13.0;
-const TAIL_END_SIZE_Y = TAIL_END_DIAMETER * 1.0;
-const TAIL_END_SIZE_Z = TAIL_END_DIAMETER * 1.0 / 1.8;
+let TAIL_END_DIAMETER = 1 * ADJUSTABLE_VARS.helicopterScale;
+let TAIL_END_SIZE_X = TAIL_END_DIAMETER * 1.0 / 13.0;
+let TAIL_END_SIZE_Y = TAIL_END_DIAMETER * 1.0;
+let TAIL_END_SIZE_Z = TAIL_END_DIAMETER * 1.0 / 1.8;
 
 //Leg connector
 const LEG_ANGLE_Y = 30;
 const LEG_ANGLE_Z = 60;
-const LEG_CONECT_X = 1.2;
-const LEG_CONECT_Y = 1 / 7;
-const LEG_CONECT_Z = 1 / 4;
+let LEG_CONECT_X = 1.2 * ADJUSTABLE_VARS.helicopterScale;
+let LEG_CONECT_Y = 1 / 7 * ADJUSTABLE_VARS.helicopterScale;
+let LEG_CONECT_Z = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
 
 //Helicopter Body
-const BODY_DIAMETER = 5.0;
-const BODY_SIZE_X = BODY_DIAMETER * 1.0 / 3.0;
-const BODY_SIZE_Y = BODY_DIAMETER * 1.0 / 2.2;
-const BODY_SIZE_Z = BODY_DIAMETER * 1.0;
+let BODY_DIAMETER = 5.0 * ADJUSTABLE_VARS.helicopterScale;
+let BODY_SIZE_X = BODY_DIAMETER * 1.0 / 3.0;
+let BODY_SIZE_Y = BODY_DIAMETER * 1.0 / 2.2;
+let BODY_SIZE_Z = BODY_DIAMETER * 1.0;
 
 //Feet
-const FEET_X = 1 / 4;
-const FEET_Y = 1 / 4;
-const FEET_Z = BODY_SIZE_Z;
+let FEET_X = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
+let FEET_Y = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
+let FEET_Z = BODY_SIZE_Z;
 
 const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
 const HELICOPTER_MASS = 10.0;
-const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+let HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
-const HELICOPTER_INIT_Y = 0.0 + (HELICOPTER_BOTTOM_TO_CENTER- 1.0) * ADJUSTABLE_VARS.helicopterScale;
+const HELICOPTER_INIT_Y = 0.0
 
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
@@ -642,7 +642,7 @@ function setup(shaders) {
   */
   function helicePart() {
     selectColor(HELICE_PART_COLOR);
-    multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z]);
 
     uploadModelView();
 
@@ -657,7 +657,7 @@ function setup(shaders) {
       HELICE_CONECT_DIAMETER,
       HELICE_CONECT_HIGH,
       HELICE_CONECT_DIAMETER,
-    ].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    ]);
 
     uploadModelView();
 
@@ -670,7 +670,7 @@ function setup(shaders) {
     for (let i = 0; i < 360; i += 360 / HELICE_NUM) {
       pushMatrix();
       multRotationY(heliceSpeed * time + i);
-      multTranslation([HELICE_DIAMETER / 2.0, 0, 0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+      multTranslation([HELICE_DIAMETER / 2.0, 0, 0]);
       helicePart();
       popMatrix();
     }
@@ -692,7 +692,7 @@ function setup(shaders) {
   */
   function tailConnector() {
     selectColor(TAIL_MAIN_CONECT_COLOR);
-    multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z]);
 
     uploadModelView();
 
@@ -703,7 +703,7 @@ function setup(shaders) {
   */
   function tailEnd() {
     selectColor(TAIL_END_COLOR);
-    multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z]);
 
     uploadModelView();
 
@@ -718,7 +718,7 @@ function setup(shaders) {
       tailEnd();
     popMatrix();
     pushMatrix();
-      multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+      multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0]);
       multRotationZ(90);
       multScale([0.3, 0.3, 0.3]);
       helice();
@@ -733,7 +733,7 @@ function setup(shaders) {
       tailConnector();
     popMatrix();
     pushMatrix();
-      multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+      multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0]);
       tailTip();
     popMatrix();
   }
@@ -742,7 +742,7 @@ function setup(shaders) {
     Este método desenha o body do helicoptero
   */
   function body() {
-    multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
 
     selectColor(BODY_COLOR);
     uploadModelView();
@@ -826,7 +826,7 @@ function setup(shaders) {
     body();
     popMatrix();
     pushMatrix();
-    multTranslation([0, BODY_SIZE_Y / 2.0 + HELICE_CONECT_HIGH / 2.0, 0.0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multTranslation([0, BODY_SIZE_Y / 2.0 + HELICE_CONECT_HIGH / 2.0, 0.0]);
     helice();
     popMatrix();
     pushMatrix();
@@ -834,11 +834,11 @@ function setup(shaders) {
       0,
       BODY_SIZE_Y / 4.0,
       -(BODY_SIZE_Z + TAIL_MAIN_SIZE_Z) / 2.5,
-    ].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    ]);
     tail();
     popMatrix();
     pushMatrix();
-    multScale([1,1,1].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+    multScale([1,1,1].map((x)=>x ));
     multTranslation([
       0,
       -(BODY_SIZE_Y / 2.0 +
@@ -848,7 +848,7 @@ function setup(shaders) {
     feet();
     popMatrix();
     pushMatrix();
-      multScale([0.15, 0.15, 0.15].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
+      multScale([0.15, 0.15, 0.15].map((x) => x * ADJUSTABLE_VARS.helicopterScale));
       multRotationY(-90);
       multTranslation([0.0, 27.0, 0.0]);
       domo();
@@ -1214,19 +1214,6 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
-  function domoColum(){
-    selectColor(vec3(0.0, 0.0, 0.0));
-    multScale([0.5, DOMO_BODY_SIZE_Y, 0.5]);
-    uploadModelView();
-    CUBE.draw(gl, program, mode);
-  }
-
-  function domoBodyColum(){
-    pushMatrix();
-      domoBody();
-    popMatrix();
-  }
-
   function domoLeg(){
     selectColor(DOMO_BODY_COLOR);
     multScale([DOMO_LEG_SIZE_X, DOMO_LEG_SIZE_Y, DOMO_LEG_SIZE_Z]);
@@ -1259,7 +1246,7 @@ function setup(shaders) {
 
   function domo(){
     pushMatrix();
-      domoBodyColum();
+      domoBody();
     popMatrix();
     pushMatrix();
       multTranslation([DOMO_BODY_SIZE_X / 2, -DOMO_BODY_SIZE_Y / 2 + 6.0 / 2, DOMO_LEG_SIZE_Z]);
@@ -1274,22 +1261,22 @@ function setup(shaders) {
       domoMouth();
     popMatrix();
     pushMatrix();
-      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, -BODY_SIZE_Z / 1.5]);
+      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, -BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale]);
       domoEye();
     popMatrix();
     pushMatrix();
-      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, BODY_SIZE_Z / 1.5]);
+      multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale]);
       domoEye();
     popMatrix();
     for(let i = 0; i < 3; i++){
       pushMatrix();
-        multTranslation([DOMO_BODY_SIZE_X / 2, -0.5, BODY_SIZE_Z / 1.5 - 2.0 * i * 2 + 0.5 ]);
+        multTranslation([DOMO_BODY_SIZE_X / 2, -0.5, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
         domoTooth();
       popMatrix();
     }
     for(let i = 0; i < 3; i++){
       pushMatrix();
-        multTranslation([DOMO_BODY_SIZE_X / 2, 3.0, BODY_SIZE_Z / 1.5 - 2.0 * i * 2 + 0.5 ]);
+        multTranslation([DOMO_BODY_SIZE_X / 2, 3.0, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
         domoTooth();
       popMatrix();
     }
@@ -1411,6 +1398,41 @@ function setup(shaders) {
     return vec3(crate.posX,crate.posY,crate.posZ);
   }
 
+  function updateHelicopterSize(){
+     BODY_DIAMETER = 5.0 * ADJUSTABLE_VARS.helicopterScale;
+     BODY_SIZE_X = BODY_DIAMETER * 1.0 / 3.0;
+     BODY_SIZE_Y = BODY_DIAMETER * 1.0 / 2.2;
+     BODY_SIZE_Z = BODY_DIAMETER * 1.0;
+
+     HELICE_DIAMETER = 4 * ADJUSTABLE_VARS.helicopterScale;
+     HELICE_SIZE_X = HELICE_DIAMETER * 1.0;
+     HELICE_SIZE_Y = HELICE_DIAMETER * 1.0 / 30.0;
+     HELICE_SIZE_Z = HELICE_DIAMETER * 1.0 / 8.0;
+
+     TAIL_MAIN_CONECT_DIAMETER = 4.0 * ADJUSTABLE_VARS.helicopterScale;
+     TAIL_MAIN_SIZE_X = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 18.0;
+     TAIL_MAIN_SIZE_Y = TAIL_MAIN_CONECT_DIAMETER * 1.0 / 8.0;
+     TAIL_MAIN_SIZE_Z = TAIL_MAIN_CONECT_DIAMETER * 1.0;
+
+     TAIL_END_DIAMETER = 1 * ADJUSTABLE_VARS.helicopterScale;
+     TAIL_END_SIZE_X = TAIL_END_DIAMETER * 1.0 / 13.0;
+     TAIL_END_SIZE_Y = TAIL_END_DIAMETER * 1.0;
+     TAIL_END_SIZE_Z = TAIL_END_DIAMETER * 1.0 / 1.8;
+    
+     HELICE_CONECT_DIAMETER = 0.3 * ADJUSTABLE_VARS.helicopterScale;
+     HELICE_CONECT_HIGH = 0.5 * ADJUSTABLE_VARS.helicopterScale;
+
+     FEET_X = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
+     FEET_Y = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
+     FEET_Z = BODY_SIZE_Z;
+
+     LEG_CONECT_X = 1.2 * ADJUSTABLE_VARS.helicopterScale;
+     LEG_CONECT_Y = 1 / 7 * ADJUSTABLE_VARS.helicopterScale;
+     LEG_CONECT_Z = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
+
+     HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+  }
+
   function render() {
     updatePerspectivePerMode();
     if (animation) time += speed;
@@ -1456,8 +1478,8 @@ function setup(shaders) {
     loadMatrix(view);
     buildingsInstances = [];
     world();
-    //domo();
     checkKeys();
+    updateHelicopterSize();
   }
 }
 
