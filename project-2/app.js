@@ -86,7 +86,7 @@ let verticalDirection = 0.0;
 
 let crateInstances = [];
 const CRATE_DESPAWN_TIME = 5.0;
-let lastCrateSpawnTime = -CRATE_DESPAWN_TIME;
+const MAX_CRATE_NUM = 200;
 const CRATE_SIZE = 3.5;
 const CRATE_MASS = 3.0;
 const CRATE_STOPPING_SCALE = 42.0;
@@ -101,22 +101,23 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-const GRAVITY = 9.8; // m/s^2
-const WIND_RESISTANCE = 7.0; // N
 let sunAngle = 0.0; //em relacao ao x
 
 //Helicopter movement
 let helicopterSpeed = 0.0;
 let helicopterAngleY = 0.0;
 const AUTOMATIC_ANIMATION_RADIUS = 70.0;
+
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Y = 0.0;
+
 const HELICOPTER_MAX_SPEED = 200;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
 const HELICOPTER_ACCELERATION = 1.6;
 const HELICOPTER_STOPPING_SCALE = 60.0;
+
 let helicopterPosX = HELICOPTER_INIT_X
 let helicopterPosY = HELICOPTER_INIT_Y;
 let helicopterPosZ = HELICOPTER_INIT_Z;
@@ -171,7 +172,7 @@ const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
 const HELICOPTER_MASS = 10.0;
-const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2;
+const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
 
 //Buildings
@@ -219,10 +220,12 @@ let COLUMN_COLORS = [vec3(115.0,97.0,83.0),vec3(187.0,195.0,212.0),vec3(86.0,80.
 let WALL_COLORS = [vec3(221.0,212.0,179.0),vec3(236.0,181.0,101.0),vec3(54.0,101.0,119.0),vec3(138.0,109.0,104.0),vec3(107.0,30.0,10.0)];
 let ROOF_COLORS =[vec3(153.0,134.0,121.0),vec3(248.0,155.0,115.0),vec3(89.0,159.0,161.0),vec3(178.0,154.0,132.0),vec3(16.0,73.0,54.0)];
 
+const NIGHT_GRASS_COLOR = vec3(66.0,92.0,13.0);
+const DAY_GRASS_COLOR = vec3(100.0,139.0,20.0);
 
-const GRASS_COLOR = vec3(100.0,139.0,20.0);
-
-const WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
+const DAY_WINDOW_GLASS_COLOR = vec3(158.0,191.0,234.0);
+//const NIGHT_WINDOW_GLASS_COLOR = vec3(153.0,246.0,255.0); //luz das janelas azul
+const NIGHT_WINDOW_GLASS_COLOR = vec3(255.0,255.0,255.0); //luz das janelas branca
 
 const BOX_COLOR = vec3(115, 79, 13);
 
@@ -233,7 +236,8 @@ const TAIL_MAIN_CONECT_COLOR = vec3(255.0, 0.0, 0.0);
 const BODY_COLOR = vec3(255.0, 0.0, 0.0);
 const LEG_CONECT_COLOR = vec3(255.0, 255.0, 0.0);
 const FEET_END_COLOR = vec3(255.0, 255.0, 0.0);
-const NIGHT_COLOR = vec3(36, 22, 107);
+//const NIGHT_COLOR = vec3(36, 22, 107);
+const NIGHT_COLOR = vec3(11.0,17.0,29.0);
 const DAY_COLOR = vec3(204.0 , 151.0 , 142.0);
 
 let backgroundColor = DAY_COLOR;
@@ -448,7 +452,7 @@ function setup(shaders) {
           keys["z"] = false;
         }
       if(keys[" "]){
-        if(isCrateAlowed()){
+        if(crateInstances.length<=MAX_CRATE_NUM && isCrateAlowed()){
           spawnCrate();}
           keys[" "] = false;
         }
@@ -485,10 +489,27 @@ function setup(shaders) {
 
   function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
     let crateFloorTime = posY/(ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE);
-    let accCalcule = WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
+    let accCalcule = ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
     let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
     return vec2(crateEndX,crateEndZ);
+  }
+
+  function getEndPosCrateV2(){
+    let crate ={
+      posX: helicopterPosX,
+      posY: helicopterPosY,
+      posZ: helicopterPosZ,
+      startTime: time,
+      speed: helicopterSpeed,
+      speedY: 0.0,
+      angle: helicopterAngleY,
+    };
+    let endPos = vec3(WORLD_X_UPPER_LIMIT,WORLD_Y_UPPER_LIMIT,WORLD_Z_UPPER_LIMIT);
+    while(endPos[1]!=getFloor(endPos[0],endPos[2])){
+      endPos = moveCrate(crate);
+    }
+    return vec2(endPos[0],endPos[2]);
   }
 
   function resize_canvas() {
@@ -546,16 +567,13 @@ function setup(shaders) {
   }
 
   function isCrateAlowed(){
-    let endCrate = getEndPosCrate(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
+    let endCrate = getEndPosCrateV2(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
     for (let i = 0; i<crateInstances.length;i++){ 
       let crateObj = crateInstances[i];
-      let otherC = getEndPosCrate(crateObj.posX0,crateObj.posY0,crateObj.posZ0,crateObj.speed0,crateObj.angle);
-      console.log(i);
-      let isXInside = otherC[0] + CRATE_SIZE>endCrate[0] && otherC[0] - CRATE_SIZE<endCrate[0];
-      let isZInside = otherC[1] + CRATE_SIZE>endCrate[1] && otherC[1] - CRATE_SIZE<endCrate[1];
+      let isXInside = crateObj.endPosX + CRATE_SIZE>endCrate[0] && crateObj.endPosX - CRATE_SIZE<endCrate[0];
+      let isZInside = crateObj.endPosZ + CRATE_SIZE>endCrate[1] && crateObj.endPosZ - CRATE_SIZE<endCrate[1];
 
-      console.log(isXInside);
-      console.log(isZInside);
+      console.log(crateObj.endPosZ);
         if(isXInside && isZInside){
           return false;
         }
@@ -597,18 +615,16 @@ function setup(shaders) {
   }
 
   function spawnCrate() {
-    lastCrateSpawnTime = time;
     if(getFloor(helicopterPosX, helicopterPosZ) < helicopterPosY){
+      let endPos = getEndPosCrateV2(helicopterPosX,helicopterPosY,helicopterPosZ,helicopterSpeed,helicopterAngleY);
       crateInstances.push({
+        endPosX: endPos[0],
+        endPosZ:endPos[1],
         posX: helicopterPosX,
         posY: helicopterPosY,
         posZ: helicopterPosZ,
-        posX0: helicopterPosX,
-        posY0: helicopterPosY,
-        posZ0: helicopterPosZ,
         startTime: time,
         speed: helicopterSpeed,
-        speed0: helicopterSpeed,
         speedY: 0.0,
         angle: helicopterAngleY,
       });
@@ -827,7 +843,7 @@ function setup(shaders) {
     multTranslation([
       0,
       -(BODY_SIZE_Y / 2.0 +
-        (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / 1.2),
+        (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y + FEET_Y) / LEG_CONECT_X),
       0.0,
     ]);
     feet();
@@ -876,11 +892,18 @@ function setup(shaders) {
   /*
     Desenha o mundo
   */
+  function isNightTime(){
+    return sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle;
+  }
 
   function world() {
     pushMatrix();
       multTranslation([0.0, -1.0, 0.0]);
-      floor(GRASS_COLOR);
+      if(isNightTime()){
+      floor(NIGHT_GRASS_COLOR);}
+      else{
+        floor(DAY_GRASS_COLOR);
+      }
     popMatrix();
     pushMatrix();
       multTranslation([-20.0, 0.0, -20.0]);
@@ -923,8 +946,7 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     sunAngle+=10.0*speed;
-    console.log("Sun angle: ", sunAngle % 360.0);
-    if(sunAngle % 360.0 > 20.0 && sunAngle % 360.0 < 180.0 && ADJUSTABLE_VARS.enableDayNightCycle){
+    if(isNightTime()){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
     }
     else{
@@ -1137,7 +1159,11 @@ function setup(shaders) {
 
 
   function windowGlass(){
-    selectColor(WINDOW_GLASS_COLOR);
+    if(isNightTime()){
+    selectColor(NIGHT_WINDOW_GLASS_COLOR);
+    }else{
+      selectColor(DAY_WINDOW_GLASS_COLOR);
+    }
     multScale([WINDOW_LEN,WINDOW_HIGH,0.1]);
 
     uploadModelView();
@@ -1271,15 +1297,17 @@ function setup(shaders) {
   }
 
   function helicopterStillAnimation() {
-
-    if (
-      isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
-      helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)
-    ) {
+    let isMovable = isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
+    helicopterPosY != getFloor(helicopterPosX,helicopterPosZ);
+    if (isMovable) {
       helicopterPosY += Math.sin(time * Math.PI) / 90.0;
-      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));}
+      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));
+    }
     multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
-    multRotationZ(Math.sin(time * Math.PI));
+    if(isMovable){
+      multRotationZ(Math.sin(time * Math.PI));
+    }
+    
   }
 
   function helicopterFlight() {
@@ -1290,6 +1318,10 @@ function setup(shaders) {
     }
     helicopterSpeedCalcule();
   }
+  /**
+   * Este método tem de ser obrigatoriamente feito (e não rodamos apenas o helicoptero no angulo dele) uma vez que temos
+   * de saber se ele vai colidir com um edificio. 
+   */
 
   function helicopterAutomaticCalcule() {
     let newAngle = helicopterAngleY;
@@ -1312,7 +1344,7 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    let toAddSpeed = - WIND_RESISTANCE*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
+    let toAddSpeed = - ADJUSTABLE_VARS.wind_resistance*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
     if (helicopterSpeed + toAddSpeed >= 0.0) {
       helicopterSpeed += toAddSpeed;
     } else {
@@ -1350,7 +1382,7 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    crate.speed -= WIND_RESISTANCE*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
+    crate.speed -= ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
     crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE*speed;
     
     let newX = crate.posX + crate.speed * -Math.cos((crate.angle+90.0)*Math.PI/180.0)*speed;
@@ -1367,7 +1399,7 @@ function setup(shaders) {
     if(isWithinWorldLimit(newX,crate.posY,newZ)){
       crate.posZ = newZ;
     }
-    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && floor>WORLD_Y_LOWER_LIMIT)){
+    if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY && newY>WORLD_Y_LOWER_LIMIT)){
       crate.posY = newY;
     }else{
       crate.posY = floor;
@@ -1376,19 +1408,12 @@ function setup(shaders) {
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
     }
+
+    return vec3(crate.posX,crate.posY,crate.posZ);
   }
 
   function render() {
     updatePerspectivePerMode();
-    //console.log("EM eye: " +[xCameraPos,0.0,zCameraPos]);
-    //console.log("EM center: " + [Math.cos(horizontalDirection)+xCameraPos,0,Math.sin(horizontalDirection)+zCameraPos]);
-    //console.log("helX = " + helicopterPosX);
-    //console.log("helY = " + helicopterPosY);
-    //console.log("helZ = "+ helicopterPosZ);
-    //console.log("Helice speed = " + heliceSpeed);
-    //console.log("Inclinação d helic = " + helicopterAngleY);
-    //console.log("Distancia ao centro: " + Math.sqrt(   helicopterPosX * helicopterPosX + helicopterPosZ * helicopterPosZ, ),  );
-    console.log("Speed = " + helicopterSpeed);
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1399,32 +1424,27 @@ function setup(shaders) {
       false,
       flatten(mProjection),
     );
-    if (viewMode == CENTER_VIEW_MODE) {
-      view = lookAt([0, 0, 0], [
-        Math.sin(horizontalDirection),
-        Math.sin(verticalDirection),
-        Math.cos(horizontalDirection),
-      ], [0, 1, 0]);
-    }
-    if(viewMode == FIRST_PERSON_VIEW_MODE){
-      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
-      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [
-        -Math.cos((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosX,
-        cameraHigh,
-        Math.sin((helicopterAngleY+90.0)*Math.PI/180.0)+helicopterPosZ,
-      ], [0, 1, 0]);
-    }
 
-    if(viewMode == BOTTOM_VIEW_MODE){
-      let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
-      view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
-    }
-
-    if(viewMode == HELICOPTER_VIEW_MODE){
-
-      view = lookAt([helicopterPosX,helicopterPosY,helicopterPosZ],[helicopterPosX,helicopterPosY,helicopterPosZ+1.0],[0,1,0]);
-      let rotY = rotateY(-helicopterAngleY);
-      view = mult(rotY,view);
+    let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
+    switch(viewMode){
+      case CENTER_VIEW_MODE: 
+        view = lookAt([0, 0, 0], [Math.sin(horizontalDirection),Math.sin(verticalDirection),Math.cos(horizontalDirection),], [0, 1, 0]);
+      /**
+       *let cameRotY = rotateY(horizontalDirection);
+        let cameRotX = rotateX(verticalDirection);
+        let cameRotZ = rotateZ(verticalDirection);
+        view = mult(cameRotZ,mult(cameRotY, mult(cameRotX,view)));
+       */
+        break;
+      case FIRST_PERSON_VIEW_MODE:
+      case HELICOPTER_VIEW_MODE:
+        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0,], [0, 1, 0]);
+        let rotY = rotateY(-helicopterAngleY);
+        view = mult(rotY,view);
+      break;
+      case BOTTOM_VIEW_MODE:
+        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+      break;
     }
 
     if (hasToRestart) {

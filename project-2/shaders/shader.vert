@@ -59,8 +59,8 @@ void main() {
         toAdd = s-3.0*toAdd;
     }
     */
-    if(uLightAngle<180.0){
-        toAdd *=2.0*(vNormal[1]-1.0)*sin(radians(uLightAngle+90.0)/2.0);;
+    if(uLightAngle<180.0 && uLightAngle>20.0){
+        toAdd *=3.5*(vNormal[1]-1.0)*sin(radians(uLightAngle+90.0)/2.0);;
     }else{
         //primeira parte da rotacao
          toAdd *= 2.7*(vNormal[2]-1.0)*(vNormal[0])*sin(radians(uLightAngle+90.0));
