@@ -6,4 +6,5 @@ body {
     margin: 0px;
     overflow: hidden; /*  Disable scrollbars */
     background-color: black;
+    color: white;
 }

@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY, vec2 } from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2, rotateZ} from "./libs/MV.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
@@ -69,7 +69,7 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: false, helicopterScale: 20.0};
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: true, helicopterScale: 2.0};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -101,27 +101,19 @@ const WORLD_Y_LOWER_LIMIT = 0.0;
 const WORLD_Z_LOWER_LIMIT = -100.0;
 
 //Estes valores foram adaptados de acordo com alguns testes
-let sunAngle = 0.0; //em relacao ao x
+let sunAngle = -90.0; //em relacao ao x
 
 //Helicopter movement
 let helicopterSpeed = 0.0;
 let helicopterAngleY = 0.0;
 const AUTOMATIC_ANIMATION_RADIUS = 70.0;
 
-const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
-const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
-const HELICOPTER_INIT_Y = 0.0;
 
 const HELICOPTER_MAX_SPEED = 200;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
 const HELICOPTER_ACCELERATION = 1.6;
 const HELICOPTER_STOPPING_SCALE = 60.0;
-
-let helicopterPosX = HELICOPTER_INIT_X
-let helicopterPosY = HELICOPTER_INIT_Y;
-let helicopterPosZ = HELICOPTER_INIT_Z;
-
 
 //Main Helice
 const HELICE_DIAMETER = 4;
@@ -174,6 +166,13 @@ const CENTER_SPHERE_SIZE = 2.0;
 const HELICOPTER_MASS = 10.0;
 const HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
+const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
+const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
+const HELICOPTER_INIT_Y = 0.0 + (HELICOPTER_BOTTOM_TO_CENTER- 1.0) * ADJUSTABLE_VARS.helicopterScale;
+
+let helicopterPosX = HELICOPTER_INIT_X
+let helicopterPosY = HELICOPTER_INIT_Y;
+let helicopterPosZ = HELICOPTER_INIT_Z;
 
 //Buildings
 let buildingsInstances = [];
@@ -277,12 +276,12 @@ function setup(shaders) {
   );
 
 
-  mode = gl.LINES;
+  mode = gl.TRIANGLES;
 
   // GUI Controllers
   GUI.width = 260;
   let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
-  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 20.0).name('Gravity');
+  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
   let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
   let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
   let heliScaleController = GUI.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
@@ -1443,7 +1442,9 @@ function setup(shaders) {
         view = mult(rotY,view);
       break;
       case BOTTOM_VIEW_MODE:
-        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+        view = lookAt([helicopterPosX, helicopterPosY, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+        let rotX = rotateZ(-helicopterAngleY + 90.0);
+        view = mult(rotX, view);
       break;
     }
 
