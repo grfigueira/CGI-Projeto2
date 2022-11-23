@@ -69,7 +69,7 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: true};
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: false, helicopterScale: 20.0};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -281,7 +281,7 @@ function setup(shaders) {
   let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 20.0).name('Gravity');
   let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
   let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
-  
+  let heliScaleController = GUI.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
@@ -627,7 +627,7 @@ function setup(shaders) {
   */
   function helicePart() {
     selectColor(HELICE_PART_COLOR);
-    multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z]);
+    multScale([HELICE_SIZE_X, HELICE_SIZE_Y, HELICE_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
 
     uploadModelView();
 
@@ -642,7 +642,7 @@ function setup(shaders) {
       HELICE_CONECT_DIAMETER,
       HELICE_CONECT_HIGH,
       HELICE_CONECT_DIAMETER,
-    ]);
+    ].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
 
     uploadModelView();
 
@@ -655,7 +655,7 @@ function setup(shaders) {
     for (let i = 0; i < 360; i += 360 / HELICE_NUM) {
       pushMatrix();
       multRotationY(heliceSpeed * time + i);
-      multTranslation([HELICE_DIAMETER / 2.0, 0, 0]);
+      multTranslation([HELICE_DIAMETER / 2.0, 0, 0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
       helicePart();
       popMatrix();
     }
@@ -677,7 +677,7 @@ function setup(shaders) {
   */
   function tailConnector() {
     selectColor(TAIL_MAIN_CONECT_COLOR);
-    multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z]);
+    multScale([TAIL_MAIN_SIZE_X, TAIL_MAIN_SIZE_Y, TAIL_MAIN_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
 
     uploadModelView();
 
@@ -688,7 +688,7 @@ function setup(shaders) {
   */
   function tailEnd() {
     selectColor(TAIL_END_COLOR);
-    multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z]);
+    multScale([TAIL_END_SIZE_X, TAIL_END_SIZE_Y, TAIL_END_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
 
     uploadModelView();
 
@@ -703,7 +703,7 @@ function setup(shaders) {
       tailEnd();
     popMatrix();
     pushMatrix();
-      multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0]);
+      multTranslation([(TAIL_END_SIZE_X + HELICE_CONECT_DIAMETER) / 2, 0, 0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
       multRotationZ(90);
       multScale([0.3, 0.3, 0.3]);
       helice();
@@ -718,7 +718,7 @@ function setup(shaders) {
       tailConnector();
     popMatrix();
     pushMatrix();
-      multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0]);
+      multTranslation([0, TAIL_MAIN_SIZE_Y / 2.0, -TAIL_MAIN_SIZE_Z / 2.0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
       tailTip();
     popMatrix();
   }
@@ -727,7 +727,7 @@ function setup(shaders) {
     Este método desenha o body do helicoptero
   */
   function body() {
-    multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z]);
+    multScale([BODY_SIZE_X, BODY_SIZE_Y, BODY_SIZE_Z].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
 
     selectColor(BODY_COLOR);
     uploadModelView();
@@ -811,7 +811,7 @@ function setup(shaders) {
     body();
     popMatrix();
     pushMatrix();
-    multTranslation([0, BODY_SIZE_Y / 2.0 + HELICE_CONECT_HIGH / 2.0, 0.0]);
+    multTranslation([0, BODY_SIZE_Y / 2.0 + HELICE_CONECT_HIGH / 2.0, 0.0].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
     helice();
     popMatrix();
     pushMatrix();
@@ -819,10 +819,11 @@ function setup(shaders) {
       0,
       BODY_SIZE_Y / 4.0,
       -(BODY_SIZE_Z + TAIL_MAIN_SIZE_Z) / 2.5,
-    ]);
+    ].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
     tail();
     popMatrix();
     pushMatrix();
+    multScale([1,1,1].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
     multTranslation([
       0,
       -(BODY_SIZE_Y / 2.0 +
@@ -832,7 +833,7 @@ function setup(shaders) {
     feet();
     popMatrix();
     pushMatrix();
-      multScale([0.15, 0.15, 0.15]);
+      multScale([0.15, 0.15, 0.15].map((x)=>x * ADJUSTABLE_VARS.helicopterScale));
       multRotationY(-90);
       multTranslation([0.0, 27.0, 0.0]);
       domo();
