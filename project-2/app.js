@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY, vec2, rotateZ} from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2, rotateZ,rotate} from "./libs/MV.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
@@ -70,7 +70,7 @@ let isAutomaticAnimation = true;
 //View
 let VP_DISTANCE = 100.0;
 let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 2.0};
-const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
+const CAMERA_ANGLE_CHANGE = 3.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
 const CENTER_VIEW_MODE = "centerView";
@@ -364,13 +364,13 @@ function setup(shaders) {
           horizontalDirection -= CAMERA_ANGLE_CHANGE;
         }
       if(keys["i"]){
-          if (verticalDirection < Math.PI / 2.0) {
-            verticalDirection += CAMERA_ANGLE_CHANGE;
+          if (verticalDirection >= -90.0) {
+            verticalDirection -= CAMERA_ANGLE_CHANGE;
           }
         }
       if(keys["k"]){
-          if (verticalDirection > -Math.PI / 2.0) {
-            verticalDirection -= CAMERA_ANGLE_CHANGE;
+          if (verticalDirection <= 90.0) {
+            verticalDirection += CAMERA_ANGLE_CHANGE;
           }
         }
       if(keys["r"]){
@@ -1466,13 +1466,8 @@ function setup(shaders) {
     let cameraHigh = helicopterPosY+BODY_SIZE_Y+LEG_CONECT_Y+FEET_Y+HELICE_CONECT_HIGH+1.5;
     switch(viewMode){
       case CENTER_VIEW_MODE: 
-        view = lookAt([0, 0, 0], [Math.sin(horizontalDirection),Math.sin(verticalDirection),Math.cos(horizontalDirection),], [0, 1, 0]);
-      /**
-       *let cameRotY = rotateY(horizontalDirection);
-        let cameRotX = rotateX(verticalDirection);
-        let cameRotZ = rotateZ(verticalDirection);
-        view = mult(cameRotZ,mult(cameRotY, mult(cameRotX,view)));
-       */
+        view = lookAt([0, 0, 0], [0.0,0.0,1.0], [0, 1, 0]);     
+        view = mult(mult(view,rotate(verticalDirection,[1,0,0])), rotate(horizontalDirection,[0,1,0]));
         break;
       case FIRST_PERSON_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
