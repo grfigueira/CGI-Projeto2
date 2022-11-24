@@ -69,7 +69,8 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 2.0};
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 2.0,
+                       verticalDirection: 0.0, horizontalDirection: 0.0};
 const CAMERA_ANGLE_CHANGE = 3.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -276,11 +277,17 @@ function setup(shaders) {
 
   // GUI Controllers
   GUI.width = 260;
-  let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
-  let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
-  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
-  let heliScaleController = GUI.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
-  let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
+  const worldFolder = GUI.addFolder('World');
+  const heliFolder = GUI.addFolder('Helicopter');
+  const cameraFolder = GUI.addFolder('Camera');
+  let vpDistanceController = worldFolder.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
+  let gravityController = worldFolder.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
+  let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
+  let heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
+  let dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
+  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', 0, 360.0).name('Horizontal Direction');
+  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', 0, 360.0).name('Vertical Direction');
+
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
@@ -358,19 +365,19 @@ function setup(shaders) {
         keys["8"] = false;
       }
       if(keys["j"]){
-          horizontalDirection += CAMERA_ANGLE_CHANGE;
+          ADJUSTABLE_VARS.horizontalDirection += CAMERA_ANGLE_CHANGE;
         }
       if(keys["l"]){
-          horizontalDirection -= CAMERA_ANGLE_CHANGE;
+          ADJUSTABLE_VARS.horizontalDirection -= CAMERA_ANGLE_CHANGE;
         }
       if(keys["i"]){
-          if (verticalDirection >= -90.0) {
-            verticalDirection -= CAMERA_ANGLE_CHANGE;
+          if (ADJUSTABLE_VARS.verticalDirection >= -90.0) {
+            ADJUSTABLE_VARS.verticalDirection -= CAMERA_ANGLE_CHANGE;
           }
         }
       if(keys["k"]){
-          if (verticalDirection <= 90.0) {
-            verticalDirection += CAMERA_ANGLE_CHANGE;
+          if (ADJUSTABLE_VARS.verticalDirection <= 90.0) {
+            ADJUSTABLE_VARS.verticalDirection += CAMERA_ANGLE_CHANGE;
           }
         }
       if(keys["r"]){
@@ -1467,7 +1474,7 @@ function setup(shaders) {
     switch(viewMode){
       case CENTER_VIEW_MODE: 
         view = lookAt([0, 0, 0], [0.0,0.0,1.0], [0, 1, 0]);     
-        view = mult(mult(view,rotate(verticalDirection,[1,0,0])), rotate(horizontalDirection,[0,1,0]));
+        view = mult(mult(view,rotate(ADJUSTABLE_VARS.verticalDirection,[1,0,0])), rotate(ADJUSTABLE_VARS.horizontalDirection,[0,1,0]));
         break;
       case FIRST_PERSON_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
