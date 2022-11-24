@@ -69,7 +69,7 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 0.5, enableDayNightCycle: true, helicopterScale: 2.0};
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 2.0};
 const CAMERA_ANGLE_CHANGE = Math.PI / 20.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -88,8 +88,6 @@ let crateInstances = [];
 const CRATE_DESPAWN_TIME = 5.0;
 const MAX_CRATE_NUM = 200;
 const CRATE_SIZE = 3.5;
-const CRATE_MASS = 3.0;
-const CRATE_STOPPING_SCALE = 42.0;
 
 //World Limits and forces
 const WORLD_X_UPPER_LIMIT = 100.0;
@@ -112,8 +110,7 @@ const AUTOMATIC_ANIMATION_RADIUS = 70.0;
 const HELICOPTER_MAX_SPEED = 150;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
-const HELICOPTER_ACCELERATION = 1.6;
-const HELICOPTER_STOPPING_SCALE = 3.0*HELICOPTER_MAX_SPEED;
+let HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance + 3.0;
 
 //Main Helice
 let HELICE_DIAMETER = 4 * ADJUSTABLE_VARS.helicopterScale;
@@ -163,7 +160,6 @@ let FEET_Z = BODY_SIZE_Z;
 const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
-const HELICOPTER_MASS = 10.0;
 let HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
@@ -282,7 +278,7 @@ function setup(shaders) {
   GUI.width = 260;
   let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
   let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
-  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
+  let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 100.0).name('Wind Resistance');
   let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
   let heliScaleController = GUI.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
 
@@ -431,7 +427,7 @@ function setup(shaders) {
       if(keys["ArrowLeft"]){
           if (
           isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
-          helicopterSpeed < HELICOPTER_MAX_SPEED
+          helicopterSpeed + HELICOPTER_ACCELERATION < HELICOPTER_MAX_SPEED
         ) {
           helicopterSpeed += HELICOPTER_ACCELERATION;
         }
@@ -487,8 +483,8 @@ function setup(shaders) {
   }
 
   function getEndPosCrate(posX,posY,posZ,crateSpeed,angle){
-    let crateFloorTime = posY/(ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE);
-    let accCalcule = ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*crateFloorTime;
+    let crateFloorTime = posY/(ADJUSTABLE_VARS.gravity);
+    let accCalcule = ADJUSTABLE_VARS.wind_resistance*crateFloorTime;
     let crateEndX = posX + (crateSpeed-accCalcule)*-Math.cos((angle+90.0)*Math.PI/180.0);
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
     return vec2(crateEndX,crateEndZ);
@@ -933,8 +929,10 @@ function setup(shaders) {
 
     pushMatrix();
       multTranslation([helicopterPosX, helicopterPosY, helicopterPosZ]);
+      if(animation){
       helicopterStillAnimation();
       helicopterFlight();
+      }
       multRotationY(helicopterAngleY);
       multRotationX(
         HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
@@ -944,7 +942,9 @@ function setup(shaders) {
     pushMatrix();
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
+    if(animation){
     sunAngle+=10.0*speed;
+    }
     if(isNightTime()){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
     }
@@ -958,7 +958,9 @@ function setup(shaders) {
     //popMatrix();
     for (let crateObj of crateInstances) {
       pushMatrix();
+      if(animation){
       moveCrate(crateObj);
+      }
       multTranslation([crateObj.posX, crateObj.posY +CRATE_SIZE/2.0, crateObj.posZ]);
       crate();
       popMatrix();
@@ -1330,7 +1332,7 @@ function setup(shaders) {
         heliceSpeed = 0.0;
       }
     }
-    let toAddSpeed = - ADJUSTABLE_VARS.wind_resistance*HELICOPTER_STOPPING_SCALE/HELICOPTER_MASS*speed;
+    let toAddSpeed = - ADJUSTABLE_VARS.wind_resistance*speed;
     if (helicopterSpeed + toAddSpeed >= 0.0) {
       helicopterSpeed += toAddSpeed;
     } else {
@@ -1368,17 +1370,18 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    crate.speed -= ADJUSTABLE_VARS.wind_resistance*CRATE_STOPPING_SCALE/CRATE_MASS*speed;
-    crate.speedY -= ADJUSTABLE_VARS.gravity*CRATE_STOPPING_SCALE*speed;
+    //Perguntar ao professor se quer que ela fique com velocidade negativa (se fica para trás)
+    crate.speed -= (ADJUSTABLE_VARS.wind_resistance*4.5)*speed;
+    crate.speedY -= ADJUSTABLE_VARS.gravity*7.0*speed;
     
-    let newX = crate.posX + crate.speed * -Math.cos((crate.angle+90.0)*Math.PI/180.0)*speed;
+    let newX = crate.posX + crate.speed * Math.sin((crate.angle)*Math.PI/180.0)*speed;
 
-    let newZ = crate.posZ + crate.speed * Math.sin((crate.angle+90.0)*Math.PI/180.0)*speed;
+    let newZ = crate.posZ + crate.speed * Math.cos((crate.angle)*Math.PI/180.0)*speed;
 
     let newY = crate.posY + crate.speedY*speed;
 
     let floor = getFloor(newX,newZ);
-    if(crate.posY != getFloor(crate.posX,crate.posZ)){
+    if(crate.posY != getFloor(crate.posX,crate.posZ) && crate.posY != WORLD_Y_LOWER_LIMIT){
     if(isWithinWorldLimit(newX,crate.posY,crate.posZ)){
       crate.posX = newX;
     }
@@ -1387,14 +1390,17 @@ function setup(shaders) {
     }
     if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY)){
       if(newY>WORLD_Y_LOWER_LIMIT){
-        crate.posY = newY; 
-      }
-      else{
-        crate.posY = CRATE_SIZE / 2.0;
+        console.log("Passou-Maior do que o limite");
+        crate.posY = newY;
+      }else{
+        console.log("Passou-Menor do que o limite");
+        crate.posY = WORLD_Y_LOWER_LIMIT;
       }
     }else{
+      console.log("Não passou");
       crate.posY = floor;
     }
+
   }
     if (time - crate.startTime > CRATE_DESPAWN_TIME) {
       crateInstances.splice(crateInstances.indexOf(crate), 1);
@@ -1434,11 +1440,17 @@ function setup(shaders) {
      LEG_CONECT_X = 1.2 * ADJUSTABLE_VARS.helicopterScale;
      LEG_CONECT_Y = 1 / 7 * ADJUSTABLE_VARS.helicopterScale;
      LEG_CONECT_Z = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
-
+ 
      HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+  
+    }
+
+  function updateHelicopterMovement(){
+    HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/2.0;
   }
 
   function render() {
+    console.log(helicopterSpeed);
     updatePerspectivePerMode();
     if (animation) time += speed;
     window.requestAnimationFrame(render);
@@ -1485,6 +1497,7 @@ function setup(shaders) {
     world();
     checkKeys();
     updateHelicopterSize();
+    updateHelicopterMovement();
   }
 }
 
