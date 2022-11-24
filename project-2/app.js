@@ -106,7 +106,7 @@ let sunAngle = -90.0; //em relacao ao x
 //Helicopter movement
 let helicopterSpeed = 0.0;
 let helicopterAngleY = 0.0;
-const AUTOMATIC_ANIMATION_RADIUS = 70.0;
+const AUTOMATIC_ANIMATION_RADIUS = 50.0;
 
 
 const HELICOPTER_MAX_SPEED = 150;
@@ -283,8 +283,8 @@ function setup(shaders) {
   let vpDistanceController = GUI.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
   let gravityController = GUI.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
   let windResController = GUI.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
-  let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
   let heliScaleController = GUI.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
+  let dayNightController = GUI.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
 
   resize_canvas();
   window.addEventListener("resize", resize_canvas);
