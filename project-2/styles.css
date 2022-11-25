@@ -19,8 +19,8 @@ background-color: purple;
 }
 
 .sidebar div {
-padding: 8px;
-font-size: 12px;
+padding: 2px;
+font-size: 13px;
 display: block;
 }
 
@@ -28,5 +28,7 @@ button {
 position: absolute;
 right: 0;
 bottom: 0;
+height: 10%;
+width: 10%;
 }
 
