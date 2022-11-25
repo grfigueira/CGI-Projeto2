@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY, vec2, rotateZ,rotate} from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2, rotateZ,rotate, rotateX} from "./libs/MV.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
@@ -424,7 +424,7 @@ function setup(shaders) {
           if (heliceSpeed < HELICE_FLYING_SPEED) {
             heliceSpeed += 50.0;
           } else {
-            let newY = helicopterPosY + 0.2;
+            let newY = helicopterPosY + 0.5;
             if(isWithinWorldLimit(helicopterPosX,newY,helicopterPosZ)){
               helicopterPosY = newY;
             }  
@@ -479,12 +479,10 @@ function setup(shaders) {
   function updatePerspectivePerMode(){
     switch(viewMode){
       case BOTTOM_VIEW_MODE:
-        break;
       case FIRST_PERSON_VIEW_MODE:
         updateFirstPerson();
         break;
-      case CENTER_VIEW_MODE:
-          
+      case CENTER_VIEW_MODE: 
       case DEFAULT_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
         mProjection = ortho(
@@ -1474,9 +1472,6 @@ function setup(shaders) {
   
     }
 
-  function updateHelicopterMovement(){
-    HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/10.0;
-  }
 
   function render() {
     console.log(helicopterSpeed);
@@ -1502,7 +1497,10 @@ function setup(shaders) {
       case HELICOPTER_VIEW_MODE:
         view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0,], [0, 1, 0]);
         let rotY = rotateY(-helicopterAngleY);
-        view = mult(rotY,view);
+        let angleSpeed = HELICOPTER_MAX_ATTACK_ANGLE*helicopterSpeed/HELICOPTER_MAX_SPEED;
+        console.log("Angulo " + angleSpeed);
+        view = mult(rotateX(angleSpeed),mult(rotY,view));
+        
       break;
       case BOTTOM_VIEW_MODE:
         view = lookAt([helicopterPosX, helicopterPosY, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
@@ -1521,7 +1519,6 @@ function setup(shaders) {
     world();
     checkKeys();
     updateHelicopterSize();
-    updateHelicopterMovement();
   }
 }
 
