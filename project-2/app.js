@@ -69,7 +69,7 @@ let isAutomaticAnimation = true;
 //VIEWCONST
 //View
 let ADJUSTABLE_VARS = {vp_distance: 150.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 3.5,
-                       verticalDirection: 335.0, horizontalDirection: 145.0};
+                       verticalDirection: -37.0, horizontalDirection: 140.0};
 const CAMERA_ANGLE_CHANGE = 3.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -77,7 +77,7 @@ const CENTER_VIEW_MODE = "centerView";
 const DEFAULT_VIEW_MODE = "defaultView";
 const HELICOPTER_VIEW_MODE = "helicopterView";
 const GUI = new dat.GUI({name: 'My GUI'});
-let viewMode = DEFAULT_VIEW_MODE;
+let viewMode = CENTER_VIEW_MODE;
 
 
 //Crate
@@ -85,7 +85,7 @@ let viewMode = DEFAULT_VIEW_MODE;
 let crateInstances = [];
 const CRATE_DESPAWN_TIME = 5.0;
 const MAX_CRATE_NUM = 200;
-const CRATE_SIZE = 3.5;
+let CRATE_SIZE;
 
 //World Limits and forces
 const WORLD_X_UPPER_LIMIT = 100.0;
@@ -108,7 +108,7 @@ const AUTOMATIC_ANIMATION_RADIUS = 50.0;
 const HELICOPTER_MAX_SPEED = 130;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
-let HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/3.0;
+const HELICOPTER_ACCELERATION = 15.0;
 
 //Main Helice
 let HELICE_DIAMETER = 4 * ADJUSTABLE_VARS.helicopterScale;
@@ -293,8 +293,8 @@ function setup(shaders) {
   let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 50.0).name('Wind Resistance');
   let heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
   let dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
-  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', 0, 360.0).name('Horizontal Direction');
-  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', 0, 360.0).name('Vertical Direction');
+  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', -40.0, 320.0).name('Horizontal Direction');
+  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', -227.0, 143.0).name('Vertical Direction');
 
 
   resize_canvas();
@@ -357,37 +357,17 @@ function setup(shaders) {
           keys["4"] = false;
         }
       if(keys["5"]){
-          viewMode = CENTER_VIEW_MODE;
+          viewMode = FIRST_PERSON_VIEW_MODE;
           keys["5"] = false;
         }
       if(keys["6"]){
-          viewMode = FIRST_PERSON_VIEW_MODE;
-          keys["6"] = false;
-        }
-      if(keys["7"]){
         viewMode = BOTTOM_VIEW_MODE;
+        keys["6"] = false;
+      }
+      if(keys["7"]){
+        viewMode = HELICOPTER_VIEW_MODE;
         keys["7"] = false;
       }
-      if(keys["8"]){
-        viewMode = HELICOPTER_VIEW_MODE;
-        keys["8"] = false;
-      }
-      if(keys["j"]){
-          ADJUSTABLE_VARS.horizontalDirection += CAMERA_ANGLE_CHANGE;
-        }
-      if(keys["l"]){
-          ADJUSTABLE_VARS.horizontalDirection -= CAMERA_ANGLE_CHANGE;
-        }
-      if(keys["i"]){
-          if (ADJUSTABLE_VARS.verticalDirection >= -90.0) {
-            ADJUSTABLE_VARS.verticalDirection -= CAMERA_ANGLE_CHANGE;
-          }
-        }
-      if(keys["k"]){
-          if (ADJUSTABLE_VARS.verticalDirection <= 90.0) {
-            ADJUSTABLE_VARS.verticalDirection += CAMERA_ANGLE_CHANGE;
-          }
-        }
       if(keys["r"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
             if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
@@ -451,14 +431,6 @@ function setup(shaders) {
           }
         }
         }
-      if(keys["q"]){
-          ADJUSTABLE_VARS.vp_distance--;
-          keys["q"] = false;
-        }
-      if(keys["a"]){
-          ADJUSTABLE_VARS.vp_distance++;
-          keys["a"] = false;
-        }
       if(keys["z"]){
           //Troca o tipo de animacao para manual/automatica
           isAutomaticAnimation = !isAutomaticAnimation;
@@ -482,7 +454,7 @@ function setup(shaders) {
       case FIRST_PERSON_VIEW_MODE:
         updateFirstPerson();
         break;
-      case CENTER_VIEW_MODE: 
+      case CENTER_VIEW_MODE:
       case DEFAULT_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
         mProjection = ortho(
@@ -505,7 +477,8 @@ function setup(shaders) {
     let crateEndZ = posZ + (crateSpeed-accCalcule)*Math.sin((angle+90.0)*Math.PI/180.0);
     return vec2(crateEndX,crateEndZ);
   }
-
+  
+  // Used to stop crates from falling into one another 
   function getEndPosCrateV2(){
     let crate ={
       posX: helicopterPosX,
@@ -1421,10 +1394,10 @@ function setup(shaders) {
         crate.posY = newY;
       }else{
         console.log("Passou-Menor do que o limite");
-        crate.posY = WORLD_Y_LOWER_LIMIT;
-      }
-    }else{
-      console.log("Não passou");
+      crate.posY = WORLD_Y_LOWER_LIMIT;
+    }
+  }else{
+    console.log("Nao passou");
       crate.posY = floor;
     }
 
@@ -1469,9 +1442,9 @@ function setup(shaders) {
      LEG_CONECT_Z = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
  
      HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+     CRATE_SIZE = 2.5 * ADJUSTABLE_VARS.helicopterScale;
   
     }
-
 
   function render() {
     console.log(helicopterSpeed);
