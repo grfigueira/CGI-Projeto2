@@ -53,7 +53,7 @@ import * as SPHERE from "../../libs/objects/sphere.js";
 import * as CYLINDER from "../../libs/objects/cylinder.js";
 import * as CUBE from "../../libs/objects/cube.js";
 import * as PYRAMID from "../../libs/objects/pyramid.js";
-import { mult, perspective, rotateY, vec2, rotateZ,rotate} from "./libs/MV.js";
+import { mult, perspective, rotateY, vec2, rotateZ, rotateX, rotate} from "./libs/MV.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
@@ -205,6 +205,8 @@ const N_BUILDINGS = 7.0;
 let currBuilding = 0;
 
 let seedGenerated = [];
+
+let lastTime = 0;
 
 //Colors
 
@@ -1278,6 +1280,16 @@ function setup(shaders) {
     }
   }
 
+  function roadBase(){
+    selectColor(vec3(0.0, 0.0, 0.0));
+  }
+
+  function road(){
+    pushMatrix();
+      roadBase();
+    popMatrix();
+  }
+
   function helicopterStillAnimation() {
     let isMovable = isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
     helicopterPosY != getFloor(helicopterPosX,helicopterPosZ);
@@ -1446,9 +1458,10 @@ function setup(shaders) {
   
     }
 
-  function render() {
+  function render(currentTime) {
     console.log(helicopterSpeed);
     updatePerspectivePerMode();
+    speed = (currentTime - lastTime) / 1000.0;
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1468,9 +1481,10 @@ function setup(shaders) {
         break;
       case FIRST_PERSON_VIEW_MODE:
       case HELICOPTER_VIEW_MODE:
-        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0,], [0, 1, 0]);
+        view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0], [0, 1, 0]);
         let rotY = rotateY(-helicopterAngleY);
-        view = mult(rotY,view);
+        let rotX2 = rotateX(HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED));
+        view = mult(rotX2, mult(rotY,view));
       break;
       case BOTTOM_VIEW_MODE:
         view = lookAt([helicopterPosX, helicopterPosY, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
@@ -1489,6 +1503,7 @@ function setup(shaders) {
     world();
     checkKeys();
     updateHelicopterSize();
+    lastTime = currentTime;
   }
 }
 
