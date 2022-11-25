@@ -68,8 +68,8 @@ let isAutomaticAnimation = true;
 
 //VIEWCONST
 //View
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 30.0, enableDayNightCycle: true, helicopterScale: 2.0,
-                       verticalDirection: 0.0, horizontalDirection: 0.0};
+let ADJUSTABLE_VARS = {vp_distance: 150.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 3.5,
+                       verticalDirection: 335.0, horizontalDirection: 145.0};
 const CAMERA_ANGLE_CHANGE = 3.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
@@ -105,10 +105,10 @@ let helicopterAngleY = 0.0;
 const AUTOMATIC_ANIMATION_RADIUS = 50.0;
 
 
-const HELICOPTER_MAX_SPEED = 150;
+const HELICOPTER_MAX_SPEED = 130;
 const HELICOPTER_ANGLE_CHANGE = 7.0;
 const HELICOPTER_MAX_ATTACK_ANGLE = 30;
-let HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance + 3.0;
+let HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/3.0;
 
 //Main Helice
 let HELICE_DIAMETER = 4 * ADJUSTABLE_VARS.helicopterScale;
@@ -440,11 +440,15 @@ function setup(shaders) {
           }
           }
       if(keys["ArrowLeft"]){
+        if(isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ)){
           if (
-          isAutomaticAnimation && helicopterPosY != getFloor(helicopterPosX,helicopterPosZ) &&
           helicopterSpeed + HELICOPTER_ACCELERATION < HELICOPTER_MAX_SPEED
         ) {
           helicopterSpeed += HELICOPTER_ACCELERATION;
+        }
+          else{
+            helicopterSpeed = HELICOPTER_MAX_SPEED;
+          }
         }
         }
       if(keys["q"]){
@@ -1307,11 +1311,11 @@ function setup(shaders) {
     let isMovable = isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
     helicopterPosY != getFloor(helicopterPosX,helicopterPosZ);
     if (isMovable) {
-      let toAddAnimation = Math.sin(time * Math.PI) / 90.0;
+      let toAddAnimation = Math.sin(time * Math.PI) / 80.0;
       if(isWithinWorldLimit(helicopterPosX,helicopterPosY+toAddAnimation,helicopterPosZ)){
         helicopterPosY += toAddAnimation;
       }
-      multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));
+      multRotationZ(ADJUSTABLE_VARS.wind_resistance/30.0 * Math.sin(time * Math.PI));
     }
     multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
     if(isMovable){
@@ -1393,7 +1397,10 @@ function setup(shaders) {
 
   function moveCrate(crate) {
     //Perguntar ao professor se quer que ela fique com velocidade negativa (se fica para trás)
-    crate.speed -= (ADJUSTABLE_VARS.wind_resistance*4.5)*speed;
+    let toAddSpeed = (ADJUSTABLE_VARS.wind_resistance*3.0)*speed;
+    if(crate.speed- toAddSpeed>0.0){
+    crate.speed -= toAddSpeed
+  }
     crate.speedY -= ADJUSTABLE_VARS.gravity*10.0*speed;
     
     let newX = crate.posX + crate.speed * Math.sin((crate.angle)*Math.PI/180.0)*speed;
@@ -1468,7 +1475,7 @@ function setup(shaders) {
     }
 
   function updateHelicopterMovement(){
-    HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/2.0;
+    HELICOPTER_ACCELERATION = ADJUSTABLE_VARS.wind_resistance/10.0;
   }
 
   function render() {
