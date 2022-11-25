@@ -250,6 +250,17 @@ const XYview = lookAt([0, 0, ADJUSTABLE_VARS.vp_distance], [0, 0, 0], [0, 1, 0])
 let view = axonotricView;
 let keys = {}; // Map that stores whether each key is pressed or not
 
+document.getElementById("tutorialButton").addEventListener("click", showTutorial);
+
+function showTutorial(){
+  if(document.getElementById("tutorial").style.display === "none"){
+    document.getElementById("tutorial").style.display = "block";
+  }
+  else{
+    document.getElementById("tutorial").style.display = "none";
+  }
+}
+
 function setup(shaders) {
   generateSeeds();
   let canvas = document.getElementById("gl-canvas");
@@ -467,7 +478,6 @@ function setup(shaders) {
   function updatePerspectivePerMode(){
     switch(viewMode){
       case BOTTOM_VIEW_MODE:
-
         break;
       case FIRST_PERSON_VIEW_MODE:
         updateFirstPerson();
@@ -950,7 +960,12 @@ function setup(shaders) {
     multRotationZ(sunAngle);
     multTranslation([-2*WORLD_Y_UPPER_LIMIT,0.0,0.0]);
     if(animation){
-    sunAngle+=10.0*speed;
+      if(ADJUSTABLE_VARS.enableDayNightCycle){
+        sunAngle+=10.0*speed;
+      }
+      else{
+        sunAngle = -90.0;
+      }
     }
     if(isNightTime()){
       gl.clearColor(NIGHT_COLOR[0] / 255.0, NIGHT_COLOR[1] / 255.0, NIGHT_COLOR[2] / 255.0, 1.0); 
