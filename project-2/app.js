@@ -68,8 +68,7 @@ let isAutomaticAnimation = true;
 
 //VIEWCONST
 //View
-let VP_DISTANCE = 100.0;
-let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 35.0, enableDayNightCycle: true, helicopterScale: 2.0,
+let ADJUSTABLE_VARS = {vp_distance: 100.0, gravity: 9.8, wind_resistance: 30.0, enableDayNightCycle: true, helicopterScale: 2.0,
                        verticalDirection: 0.0, horizontalDirection: 0.0};
 const CAMERA_ANGLE_CHANGE = 3.0;
 const FIRST_PERSON_VIEW_MODE = "firstPersonView";
@@ -80,8 +79,6 @@ const HELICOPTER_VIEW_MODE = "helicopterView";
 const GUI = new dat.GUI({name: 'My GUI'});
 let viewMode = DEFAULT_VIEW_MODE;
 
-let horizontalDirection = 0.0;
-let verticalDirection = 0.0;
 
 //Crate
 
@@ -293,7 +290,7 @@ function setup(shaders) {
   const cameraFolder = GUI.addFolder('Camera');
   let vpDistanceController = worldFolder.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
   let gravityController = worldFolder.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
-  let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 2.0).name('Wind Resistance');
+  let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 50.0).name('Wind Resistance');
   let heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
   let dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
   let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', 0, 360.0).name('Horizontal Direction');
@@ -1310,7 +1307,10 @@ function setup(shaders) {
     let isMovable = isWithinWorldLimit(helicopterPosX, helicopterPosY, helicopterPosZ) &&
     helicopterPosY != getFloor(helicopterPosX,helicopterPosZ);
     if (isMovable) {
-      helicopterPosY += Math.sin(time * Math.PI) / 90.0;
+      let toAddAnimation = Math.sin(time * Math.PI) / 90.0;
+      if(isWithinWorldLimit(helicopterPosX,helicopterPosY+toAddAnimation,helicopterPosZ)){
+        helicopterPosY += toAddAnimation;
+      }
       multRotationZ(ADJUSTABLE_VARS.wind_resistance/10.0 * Math.sin(time * Math.PI));
     }
     multTranslation([0, HELICOPTER_BOTTOM_TO_CENTER, 0]);
@@ -1394,7 +1394,7 @@ function setup(shaders) {
   function moveCrate(crate) {
     //Perguntar ao professor se quer que ela fique com velocidade negativa (se fica para trás)
     crate.speed -= (ADJUSTABLE_VARS.wind_resistance*4.5)*speed;
-    crate.speedY -= ADJUSTABLE_VARS.gravity*7.0*speed;
+    crate.speedY -= ADJUSTABLE_VARS.gravity*10.0*speed;
     
     let newX = crate.posX + crate.speed * Math.sin((crate.angle)*Math.PI/180.0)*speed;
 
