@@ -290,13 +290,13 @@ function setup(shaders) {
   const worldFolder = GUI.addFolder('World');
   const heliFolder = GUI.addFolder('Helicopter');
   const cameraFolder = GUI.addFolder('Camera');
-  let vpDistanceController = worldFolder.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
-  let gravityController = worldFolder.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
-  let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 50.0).name('Wind Resistance');
-  let heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
-  let dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
-  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', -40.0, 320.0).name('θ');
-  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', -227.0, 143.0).name('γ');
+  const vpDistanceController = worldFolder.add(ADJUSTABLE_VARS, 'vp_distance', 1.0, 500.0).name('World Scale');
+  const gravityController = worldFolder.add(ADJUSTABLE_VARS, 'gravity', 2.0, 40.0).name('Gravity');
+  const windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 50.0).name('Wind Resistance');
+  const heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
+  const dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
+  const horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', -40.0, 320.0).name('θ');
+  const verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', -227.0, 143.0).name('γ');
 
 
   resize_canvas();
@@ -914,7 +914,12 @@ function setup(shaders) {
       addBuilding(28.0, BUILDING_FLOOR_HIGH / 2.0, 80.0);
     popMatrix();
     pushMatrix();
-      addBuilding(-80.0,BUILDING_FLOOR_HIGH/2.0,-30.0); 
+      addBuilding(-80.0,BUILDING_FLOOR_HIGH / 2.0,-30.0); 
+    popMatrix();
+    pushMatrix();
+      multRotationY(0.0);
+      multTranslation([20.0, 0.0, 40.0]);
+      road(130.0);
     popMatrix();
     currBuilding=0;
 
@@ -1279,14 +1284,57 @@ function setup(shaders) {
       popMatrix();
     }
   }
+  
+  const ROAD_X_SIZE = 100.0;
+  const ROAD_Z_SIZE = 20.0;
+  
+  const ROAD_SIDE_HEIGHT = 2.0;
+  const ROAD_SIDE_WIDTH = ROAD_Z_SIZE / 8.0;
 
-  function roadBase(){
+  function roadBase(roadXSize){
     selectColor(vec3(0.0, 0.0, 0.0));
+    multScale([roadXSize, 1.0, ROAD_Z_SIZE]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
   }
 
-  function road(){
+  function roadSide(roadXSize){
+    selectColor(vec3(97.0, 97.0, 97.0));
+    multScale([roadXSize, ROAD_SIDE_HEIGHT, ROAD_SIDE_WIDTH]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function midPieceRoad(){
+    selectColor(vec3(255.0, 235.0, 18.0));
+    multScale([ROAD_SIDE_WIDTH, ROAD_SIDE_HEIGHT, ROAD_SIDE_WIDTH / 2]);
+    uploadModelView();
+    CUBE.draw(gl, program, mode);
+  }
+
+  function road(size, sideASize, sideBSize){
     pushMatrix();
-      roadBase();
+      roadBase(size);
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0, ROAD_SIDE_HEIGHT / 2, -ROAD_Z_SIZE / 2.0]);
+      roadSide(size);
+    popMatrix(size);
+    pushMatrix();
+      multTranslation([0.0, ROAD_SIDE_HEIGHT / 2, ROAD_Z_SIZE / 2.0]);
+      roadSide(size);
+    popMatrix();
+    let offset = -size / 2 + ROAD_SIDE_WIDTH / 2
+   for(let i = 0; i < size / ROAD_SIDE_WIDTH; i = i + 3){
+     pushMatrix();
+      multTranslation([offset + ROAD_SIDE_WIDTH * i, ROAD_SIDE_HEIGHT / 2, 0.0]);
+      midPieceRoad();
+     popMatrix();
+   }
+  }
+  
+  function roadCorner(size){
+    pushMatrix();
     popMatrix();
   }
 
@@ -1488,7 +1536,7 @@ function setup(shaders) {
         view = mult(rotateX(angleSpeed),mult(rotY,view));
       break;
       case BOTTOM_VIEW_MODE:
-        view = lookAt([helicopterPosX, helicopterPosY, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ], [1, 0, 0]);
+        view = lookAt([helicopterPosX, helicopterPosY, helicopterPosZ], [helicopterPosX, 0.0, helicopterPosZ + 1.0], [1, 0, 0]);
         let rotX = rotateZ(-helicopterAngleY + 90.0);
         view = mult(rotX, view);
       break;
@@ -1502,6 +1550,7 @@ function setup(shaders) {
     loadMatrix(view);
     buildingsInstances = [];
     world();
+    //road();
     checkKeys();
     updateHelicopterSize();
     lastTime = currentTime;
