@@ -1,35 +1,11 @@
 /**
- * Controlos:
- *  'w': Muda para visualização em malha de arame.
- *  's': Muda para visualização com superficies preenchidas
- *  'p': Pausa a animação
- *  '+': Aumenta a velocidade de animação
- *  '-': Diminui a velocidade de animação
- *  '1': Projeção axonometrica
- *  '2': Vista de alçado principal
- *  '3': Vista de planta
- *  '4': Vista de alçado lateral direito
- *  '5': Vista livre
- *  '6': Vista de primeira pessoa no helicoptero
- *  'j': Alterar direção horizontal de vista livre para menos
- *  'l': Alterar direção horizontal de vista livre para mais
- *  'i': Alterar direção vertical de vista livre para mais
- *  'k': Alterar direção vertical de vista livre para menos
- *  'r': Helicoptero andar para a frente
- *  'f': Helicoptero abranda
- *  'g': Helicoptero rodar para a direita
- *  'd': Helicoptero rodar para a esquerda
- *  'ArrowUp': Subir o helicoptero (aumentando a velocidade da helice)
- *  'ArrowDown': Descer o helicoptero
- *  'ArrowLeft': Mover o helicoptero em circulo (apenas quando está em modo automatico)
- *  'q': Aumentar distancia de visualização (apenas em Vista Livre)
- *  'a': Diminuir distancia de visualização (apenas em Vista Livre)
- *  'z': Mudar de modo automático para manual e vice versa
- *  ' ': Largar caixa
- *  'm': Gerar novo cenário
+ * Projeto 2 de CGI
  * 
+ * Grupo: G07-09
+ * 
+ * @author Guilherme Figueira 60288
+ * @author Sofia Monteiro 60766
  */
-
 
 import {
   buildProgramFromSources,
@@ -543,8 +519,6 @@ function setup(shaders) {
     for (let buildingObj of buildingsInstances){
       isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
       isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
-      console.log(isXInside);
-      console.log(isZInside);
         if(isXInside && isZInside){
           ret = Math.max(ret,buildingObj.varY);
         }
@@ -560,7 +534,6 @@ function setup(shaders) {
       let isXInside = crateObj.endPosX + CRATE_SIZE>endCrate[0] && crateObj.endPosX - CRATE_SIZE<endCrate[0];
       let isZInside = crateObj.endPosZ + CRATE_SIZE>endCrate[1] && crateObj.endPosZ - CRATE_SIZE<endCrate[1];
 
-      console.log(crateObj.endPosZ);
         if(isXInside && isZInside){
           return false;
         }
@@ -826,7 +799,6 @@ function setup(shaders) {
     tail();
     popMatrix();
     pushMatrix();
-    multScale([1,1,1].map((x)=>x ));
     multTranslation([
       0,
       -(BODY_SIZE_Y / 2.0 +
@@ -971,7 +943,7 @@ function setup(shaders) {
       }
       multRotationY(helicopterAngleY);
       multRotationX(
-        HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED),
+        HELICOPTER_MAX_ATTACK_ANGLE * (helicopterSpeed / HELICOPTER_MAX_SPEED)
       );
       helicopter();
     popMatrix();
@@ -1301,7 +1273,7 @@ function setup(shaders) {
     popMatrix();
     pushMatrix();
       multTranslation([DOMO_BODY_SIZE_X / 2, 1.0, 0.0])
-      domoMouth();
+      domoCompleteMouth();
     popMatrix();
     pushMatrix();
       multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, -BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale]);
@@ -1311,19 +1283,28 @@ function setup(shaders) {
       multTranslation([DOMO_BODY_SIZE_X / 2, DOMO_BODY_SIZE_Y / 3, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale]);
       domoEye();
     popMatrix();
-    for(let i = 0; i < 3; i++){
-      pushMatrix();
-        multTranslation([DOMO_BODY_SIZE_X / 2, -0.5, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
-        domoTooth();
-      popMatrix();
-    }
-    for(let i = 0; i < 3; i++){
-      pushMatrix();
-        multTranslation([DOMO_BODY_SIZE_X / 2, 3.0, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
-        domoTooth();
-      popMatrix();
-    }
+
   }
+
+  function domoCompleteMouth(){
+    pushMatrix();
+      domoMouth();
+    popMatrix();
+    for(let i = 0; i < 3; i++){
+      pushMatrix();
+        multTranslation([0.0, -1.5, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
+        domoTooth();
+      popMatrix();
+    }
+    for(let i = 0; i < 3; i++){
+      pushMatrix();
+        multTranslation([0.0, 2.0, BODY_SIZE_Z / 1.5 / ADJUSTABLE_VARS.helicopterScale - 2.0 * i * 2 + 0.5 ]);
+        domoTooth();
+      popMatrix();
+    }
+
+  }
+
   
   const ROAD_X_SIZE = 100.0;
   const ROAD_Z_SIZE = 20.0;
@@ -1475,8 +1456,12 @@ function setup(shaders) {
     ) {
       helicopterPosX += toAddX;
     }
+    let floor = getFloor(helicopterPosX,helicopterPosZ);
     if(heliceSpeed == 0.0){
-      helicopterPosY = getFloor(helicopterPosX,helicopterPosZ)
+      helicopterPosY = floor;
+    }
+    if(helicopterPosY == floor){
+      helicopterSpeed = 0.0;
     }
   }
 
@@ -1504,14 +1489,11 @@ function setup(shaders) {
     }
     if(isWithinWorldLimit(newX,newY,newZ) || (floor>crate.posY)){
       if(newY>WORLD_Y_LOWER_LIMIT){
-        console.log("Passou-Maior do que o limite");
         crate.posY = newY;
       }else{
-        console.log("Passou-Menor do que o limite");
       crate.posY = WORLD_Y_LOWER_LIMIT;
     }
   }else{
-    console.log("Nao passou");
       crate.posY = floor;
     }
 
@@ -1561,9 +1543,9 @@ function setup(shaders) {
     }
 
   function render(currentTime) {
-    console.log(helicopterSpeed);
     updatePerspectivePerMode();
     speed = (currentTime - lastTime) / 1000.0;
+    console.log("FPS: " + Math.round(1.0/speed));
     if (animation) time += speed;
     window.requestAnimationFrame(render);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1586,7 +1568,6 @@ function setup(shaders) {
         view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0], [0, 1, 0]);
         let rotY = rotateY(-helicopterAngleY);
         let angleSpeed = HELICOPTER_MAX_ATTACK_ANGLE*helicopterSpeed/HELICOPTER_MAX_SPEED;
-        console.log("Angulo " + angleSpeed);
         view = mult(rotateX(angleSpeed),mult(rotY,view));
       break;
       case BOTTOM_VIEW_MODE:
