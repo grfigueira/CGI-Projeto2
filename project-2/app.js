@@ -295,8 +295,8 @@ function setup(shaders) {
   let windResController = worldFolder.add(ADJUSTABLE_VARS, 'wind_resistance', 0.0, 50.0).name('Wind Resistance');
   let heliScaleController = heliFolder.add(ADJUSTABLE_VARS, 'helicopterScale', 1.0, 10.0).name('Helicopter Scale');
   let dayNightController = worldFolder.add(ADJUSTABLE_VARS, 'enableDayNightCycle').name('Enable Day/Night');
-  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', -40.0, 320.0).name('Horizontal Direction');
-  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', -227.0, 143.0).name('Vertical Direction');
+  let horizontalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'horizontalDirection', -40.0, 320.0).name('θ');
+  let verticalDirController = cameraFolder.add(ADJUSTABLE_VARS, 'verticalDirection', -227.0, 143.0).name('γ');
 
 
   resize_canvas();
@@ -339,23 +339,23 @@ function setup(shaders) {
           if (animation) speed /= 1.1;
         }
       if(keys["1"]){
-          viewMode = DEFAULT_VIEW_MODE;
+          viewMode = CENTER_VIEW_MODE;
           view = axonotricView;
           keys["1"] = false;
         }
       if(keys["2"]){
           viewMode = DEFAULT_VIEW_MODE;
-          view = XZview;
+          view = XYview;
           keys["2"] = false;
         }
       if(keys["3"]){
           viewMode = DEFAULT_VIEW_MODE;
-          view = ZYview;
+          view = XZview;
           keys["3"] = false;
         }
       if(keys["4"]){
           viewMode = DEFAULT_VIEW_MODE;
-          view = XYview;
+          view = ZYview;
           keys["4"] = false;
         }
       if(keys["5"]){
