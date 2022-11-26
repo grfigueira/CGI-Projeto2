@@ -158,7 +158,7 @@ let FEET_Z = BODY_SIZE_Z;
 const CENTER_SPHERE_SIZE = 2.0;
 
 //General helicopter
-let HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+let HELICOPTER_BOTTOM_TO_CENTER = 0.5 + BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
 
 const HELICOPTER_INIT_X = Math.sin(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
 const HELICOPTER_INIT_Z = Math.cos(helicopterAngleY * Math.PI / 180 - Math.PI / 2.0) * AUTOMATIC_ANIMATION_RADIUS;
@@ -543,7 +543,8 @@ function setup(shaders) {
     for (let buildingObj of buildingsInstances){
       isXInside = buildingObj.posX + buildingObj.varX/2.0>x && buildingObj.posX - buildingObj.varX/2.0<x;
       isZInside = buildingObj.posZ + buildingObj.varZ/2.0>z && buildingObj.posZ - buildingObj.varZ/2.0<z;
-
+      console.log(isXInside);
+      console.log(isZInside);
         if(isXInside && isZInside){
           ret = Math.max(ret,buildingObj.varY);
         }
@@ -894,6 +895,7 @@ function setup(shaders) {
     pushMatrix();
       multTranslation([-20.0, 0.0, -20.0]);
       building();
+      addBuildingInstance(-20.0, 0.0, -20.0, BASE_SIZE + BODY_SIZE_X, BUILDING_HEIGHT + ROOF_HEIGHT, BASE_SIZE + BODY_SIZE_Z);
     popMatrix();
     pushMatrix();
       addBuilding(-80.0, BUILDING_FLOOR_HIGH / 2.0, -80.0);
@@ -917,7 +919,7 @@ function setup(shaders) {
       addBuilding(-80.0,BUILDING_FLOOR_HIGH / 2.0,-30.0); 
     popMatrix();
     pushMatrix();
-    multTranslation([0.0, 0.0, 10.0]);
+    multTranslation([0.0, -0.45, 10.0]);
       pushMatrix();
         multTranslation([10.0, 0.0, 40.0]);
         road(110.0);
@@ -1326,12 +1328,12 @@ function setup(shaders) {
   const ROAD_X_SIZE = 100.0;
   const ROAD_Z_SIZE = 20.0;
   
-  const ROAD_SIDE_HEIGHT = 2.0;
+  const ROAD_SIDE_HEIGHT = 1.0;
   const ROAD_SIDE_WIDTH = ROAD_Z_SIZE / 8.0;
 
   function roadBase(roadXSize){
     selectColor(vec3(0.0, 0.0, 0.0));
-    multScale([roadXSize, 1.0, ROAD_Z_SIZE]);
+    multScale([roadXSize, 0.0, ROAD_Z_SIZE]);
     uploadModelView();
     CUBE.draw(gl, program, mode);
   }
@@ -1553,7 +1555,7 @@ function setup(shaders) {
      LEG_CONECT_Y = 1 / 7 * ADJUSTABLE_VARS.helicopterScale;
      LEG_CONECT_Z = 1 / 4 * ADJUSTABLE_VARS.helicopterScale;
  
-     HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y;
+     HELICOPTER_BOTTOM_TO_CENTER = BODY_SIZE_Y / 2.0 + (Math.cos(LEG_ANGLE_Y * Math.PI / 180) * LEG_CONECT_Y) / LEG_CONECT_X+ + FEET_Y + 0.5;
      CRATE_SIZE = 2.5 * ADJUSTABLE_VARS.helicopterScale;
   
     }
