@@ -36,7 +36,7 @@ import * as dat from "../../libs/dat.gui.module.js";
 let gl;
 
 let time = 0; // Global simulation time in days
-let speed = 1 / 60.0; // Speed (how many days added to time on each render pass
+let speed = 1 / 60.0; // Speed (how many days added to time on each render pass)
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true; // Animation is running
 let hasToRestart = false;
@@ -51,7 +51,6 @@ const FIRST_PERSON_VIEW_MODE = "firstPersonView";
 const BOTTOM_VIEW_MODE = "botomView";
 const CENTER_VIEW_MODE = "centerView";
 const DEFAULT_VIEW_MODE = "defaultView";
-const HELICOPTER_VIEW_MODE = "helicopterView";
 const GUI = new dat.GUI({name: 'My GUI'});
 let viewMode = CENTER_VIEW_MODE;
 
@@ -225,17 +224,6 @@ const XYview = lookAt([0, 0, ADJUSTABLE_VARS.vp_distance], [0, 0, 0], [0, 1, 0])
 let view = axonotricView;
 let keys = {}; // Map that stores whether each key is pressed or not
 
-document.getElementById("tutorialButton").addEventListener("click", showTutorial);
-
-function showTutorial(){
-  if(document.getElementById("tutorial").style.display === "none"){
-    document.getElementById("tutorial").style.display = "block";
-  }
-  else{
-    document.getElementById("tutorial").style.display = "none";
-  }
-}
-
 function setup(shaders) {
   generateSeeds();
   let canvas = document.getElementById("gl-canvas");
@@ -342,10 +330,6 @@ function setup(shaders) {
         viewMode = BOTTOM_VIEW_MODE;
         keys["6"] = false;
       }
-      if(keys["7"]){
-        viewMode = HELICOPTER_VIEW_MODE;
-        keys["7"] = false;
-      }
       if(keys["r"]){
           if (helicopterPosY > getFloor(helicopterPosX,helicopterPosZ) && !isAutomaticAnimation) {
             if (helicopterSpeed < HELICOPTER_MAX_SPEED) {
@@ -434,7 +418,6 @@ function setup(shaders) {
         break;
       case CENTER_VIEW_MODE:
       case DEFAULT_VIEW_MODE:
-      case HELICOPTER_VIEW_MODE:
         mProjection = ortho(
           -ADJUSTABLE_VARS.vp_distance * aspect,
           ADJUSTABLE_VARS.vp_distance * aspect,
@@ -834,13 +817,6 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
-  function centerSphere() {
-    multScale([CENTER_SPHERE_SIZE, CENTER_SPHERE_SIZE, CENTER_SPHERE_SIZE]);
-    selectColor(vec3(255.0, 0.0, 0.0));
-    uploadModelView();
-    SPHERE.draw(gl, program, mode);
-  }
-
   function crate() {
     multScale([CRATE_SIZE, CRATE_SIZE, CRATE_SIZE]);
     selectColor(BOX_COLOR);
@@ -966,9 +942,6 @@ function setup(shaders) {
     }
     Sun();
     popMatrix();
-    //pushMatrix();
-    //centerSphere();
-    //popMatrix();
     for (let crateObj of crateInstances) {
       pushMatrix();
       if(animation){
@@ -1398,11 +1371,11 @@ function setup(shaders) {
     }
     helicopterSpeedCalcule();
   }
+
   /**
    * Este método tem de ser obrigatoriamente feito (e não rodamos apenas o helicoptero no angulo dele) uma vez que temos
    * de saber se ele vai colidir com um edificio. 
    */
-
   function helicopterAutomaticCalcule() {
     let newAngle = helicopterAngleY;
     if (helicopterSpeed > 0) {
@@ -1466,7 +1439,6 @@ function setup(shaders) {
   }
 
   function moveCrate(crate) {
-    //Perguntar ao professor se quer que ela fique com velocidade negativa (se fica para trás)
     let toAddSpeed = (ADJUSTABLE_VARS.wind_resistance*3.0)*speed;
     if(crate.speed- toAddSpeed>0.0){
     crate.speed -= toAddSpeed
@@ -1564,7 +1536,6 @@ function setup(shaders) {
         view = mult(mult(view,rotate(ADJUSTABLE_VARS.verticalDirection,[1,0,0])), rotate(ADJUSTABLE_VARS.horizontalDirection,[0,1,0]));
         break;
       case FIRST_PERSON_VIEW_MODE:
-      case HELICOPTER_VIEW_MODE:
         view = lookAt([helicopterPosX, cameraHigh, helicopterPosZ], [helicopterPosX,cameraHigh,helicopterPosZ +1.0], [0, 1, 0]);
         let rotY = rotateY(-helicopterAngleY);
         let angleSpeed = HELICOPTER_MAX_ATTACK_ANGLE*helicopterSpeed/HELICOPTER_MAX_SPEED;
@@ -1585,8 +1556,6 @@ function setup(shaders) {
     loadMatrix(view);
     buildingsInstances = [];
     world();
-    //road();
-    //roadCorner(100.0);
     checkKeys();
     updateHelicopterSize();
     lastTime = currentTime;
