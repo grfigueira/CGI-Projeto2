@@ -917,10 +917,48 @@ function setup(shaders) {
       addBuilding(-80.0,BUILDING_FLOOR_HIGH / 2.0,-30.0); 
     popMatrix();
     pushMatrix();
-      multRotationY(0.0);
-      multTranslation([20.0, 0.0, 40.0]);
-      road(130.0);
-    popMatrix();
+    multTranslation([0.0, 0.0, 10.0]);
+      pushMatrix();
+        multTranslation([10.0, 0.0, 40.0]);
+        road(110.0);
+      popMatrix();
+      pushMatrix();
+        multTranslation([-130 / 2 + ROAD_Z_SIZE / 2, 0.0, 40.0]);
+        roadCorner();
+      popMatrix();
+      pushMatrix();
+        multRotationY(90.0);
+        multTranslation([-40.0, 0.0, 75]);
+        roadCorner();
+      popMatrix();
+      pushMatrix();
+        multRotationY(90.0);
+        multTranslation([ROAD_Z_SIZE / 2, 0.0, -130.0 / 2.0 + ROAD_Z_SIZE / 2]);
+        road(80.0);
+      popMatrix();
+      pushMatrix();
+        multRotationY(90.0);
+        multTranslation([ROAD_Z_SIZE / 2, 0.0, 130.0 / 2.0 + ROAD_Z_SIZE / 2]);
+        road(80.0);
+      popMatrix();
+      pushMatrix();
+      multRotationY(180.0);
+      multTranslation([-20.0, 0.0, 20.0]);
+        pushMatrix();
+          multTranslation([10.0, 0.0, 40.0]);
+          road(110.0);
+        popMatrix();
+        pushMatrix();
+          multTranslation([-130 / 2 + ROAD_Z_SIZE / 2, 0.0, 40.0]);
+          roadCorner();
+        popMatrix();
+        pushMatrix();
+          multRotationY(90.0);
+          multTranslation([-40.0, 0.0, 75]);
+          roadCorner();
+        popMatrix();
+        popMatrix();
+      popMatrix();
     currBuilding=0;
 
     pushMatrix();
@@ -1312,7 +1350,32 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
   }
 
-  function road(size, sideASize, sideBSize){
+  function roadCorner(){
+    pushMatrix();
+      roadBase(ROAD_Z_SIZE);
+    popMatrix();
+    pushMatrix();
+      multTranslation([0.0, ROAD_SIDE_HEIGHT / 2, ROAD_Z_SIZE / 2.0]);
+      roadSide(ROAD_Z_SIZE);
+    popMatrix();
+    pushMatrix();
+      multRotationY(90.0); 
+      multTranslation([0.0, ROAD_SIDE_HEIGHT / 2, -ROAD_Z_SIZE/2]);
+      roadSide(ROAD_Z_SIZE);
+    popMatrix();
+  }
+
+  function drawMiddlePieces(size){
+    let offset = -size / 2 + ROAD_SIDE_WIDTH / 2;
+    for(let i = 0; i < size / ROAD_SIDE_WIDTH; i = i + 3){
+      pushMatrix();
+       multTranslation([offset + ROAD_SIDE_WIDTH * i, ROAD_SIDE_HEIGHT / 2, 0.0]);
+       midPieceRoad();
+      popMatrix();
+    }
+  }
+
+  function road(size){
     pushMatrix();
       roadBase(size);
     popMatrix();
@@ -1324,18 +1387,7 @@ function setup(shaders) {
       multTranslation([0.0, ROAD_SIDE_HEIGHT / 2, ROAD_Z_SIZE / 2.0]);
       roadSide(size);
     popMatrix();
-    let offset = -size / 2 + ROAD_SIDE_WIDTH / 2
-   for(let i = 0; i < size / ROAD_SIDE_WIDTH; i = i + 3){
-     pushMatrix();
-      multTranslation([offset + ROAD_SIDE_WIDTH * i, ROAD_SIDE_HEIGHT / 2, 0.0]);
-      midPieceRoad();
-     popMatrix();
-   }
-  }
-  
-  function roadCorner(size){
-    pushMatrix();
-    popMatrix();
+    drawMiddlePieces(size);
   }
 
   function helicopterStillAnimation() {
@@ -1551,6 +1603,7 @@ function setup(shaders) {
     buildingsInstances = [];
     world();
     //road();
+    //roadCorner(100.0);
     checkKeys();
     updateHelicopterSize();
     lastTime = currentTime;
