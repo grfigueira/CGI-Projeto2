@@ -1,4 +1,4 @@
-# Simulation of a modeled scene with hierarchy
+# Simulation of a 3D modeled scene with hierarchy
 
 This WebGL project allows users to control a 3D modeled helicopter and observe its movement in a virtual scene. The helicopter can take off and land vertically (using the Up and Down arrow keys) and move in a circular path, around the y-axis, only moving forward in its trajectory (using the Left arrow key).
 
