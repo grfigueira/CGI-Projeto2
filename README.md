@@ -5,6 +5,7 @@ This WebGL project allows users to control a 3D modeled helicopter and observe i
 - The user can also move the helicopter manually with the 'RDFG' keys after switching to manual mode with the 'z' key;
 - The buildings are randomly generated and the user can request a new generation by pressing 'm';
 - The user can change some settings using the GUI on the top right of the screen;
+- The user can drop a box from under the helicopter by pressing 'Spacebar'
 
 #### This was a group project for the **Computer Graphics and Interfaces** class at FCT-UNL.
 
